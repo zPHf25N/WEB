@@ -1,0 +1,233 @@
+<!DOCTYPE html> <!-- 문서 타입 선언 -->
+<html lang="ko"> <!-- 한국어 페이지 -->
+<head> <!-- 메타/스타일 -->
+  <meta charset="UTF-8" /> <!-- 문자 인코딩 -->
+  <title>중랑구 맛집 지도</title> <!-- 브라우저 탭 제목 -->
+
+  <style> /* ================== 스타일 시작 ================== */
+    @font-face { /* 제목 폰트 등록 */
+      font-family: 'PyeongChangPeace';
+      src: url('./PyeongChangPeace-Bold.otf') format('opentype');
+      font-weight: 700;
+      font-style: normal;
+      font-display: swap;
+    }
+
+    :root{ /* ▼ 중랑구 위치/배율 조정 변수 (여기만 만지면 배치 끝) ▼ */
+      --jn-x: -260%;       /* X축 이동 (음수=왼, 양수=오) */
+      --jn-y: -70%;       /* Y축 이동 (음수=위, 양수=아래) */
+      --jn-scale: 2.5; /* 확대/축소 배율 */
+    }
+
+    *{ box-sizing: border-box; } /* 박스 모델 통일 */
+
+    body{ /* 본문 기본 */
+      margin: 0;
+      padding: 0;
+      background: #fffdf5;
+      color: #333;
+      font-family: 'Noto Sans KR','Malgun Gothic','Apple SD Gothic Neo',system-ui,sans-serif;
+    }
+
+    header{ /* 상단 헤더 */
+      position: relative;
+      text-align: center;
+      padding: 22px 20px 10px;
+    }
+
+    .back-link{ /* 뒤로가기 링크 */
+      position: absolute;
+      left: 16px;
+      top: 14px;
+      color: inherit;
+      text-decoration: none;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .title-badge{ /* 제목 배지 */
+      display: inline-block;
+      padding: 10px 36px;
+      background: #e1edff;
+      border-radius: 24px;
+    }
+
+    header h1{ /* 큰 제목 */
+      margin: 0;
+      font-family: 'PyeongChangPeace',serif;
+      font-weight: 700;
+      font-size: 44px;
+      letter-spacing: 2px;
+    }
+
+    header .subtitle{ /* 부제목 */
+      margin: 12px 0 0;
+      font-size: 15px;
+      color: #666;
+    }
+
+    main{ /* 메인 컨테이너 */
+      max-width: 1100px;
+      margin: 26px auto 40px;
+      padding: 0 20px 40px;
+    }
+
+    .layout{ /* 2열 그리드 */
+      display: grid;
+      grid-template-columns: minmax(0,1.1fr) minmax(0,1.1fr);
+      gap: 32px;
+      align-items: start;
+    }
+
+    @media (max-width: 900px){ /* 모바일 1열 */
+      .layout{ grid-template-columns: 1fr; }
+    }
+
+    .map-card,.list-card{ /* 카드 공통 */
+      background: #fff;
+      border-radius: 20px;
+      box-shadow: 0 6px 18px rgba(0,0,0,.06);
+    }
+
+    .map-card{ padding: 18px; overflow: hidden; } /* 지도 카드 */
+    .map-inner{ display: flex; flex-direction: column; height: 100%; } /* 내부 래퍼 */
+    .map-title{ font-weight: 700; font-size: 17px; margin-bottom: 10px; text-align: center; } /* 소제목 */
+
+    .map-stage{ /* SVG 무대 */
+      flex: 1;
+      min-height: 440px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .map-stage svg{ /* SVG 반응형 크기 */
+      width: clamp(520px, 60vw, 760px);
+      height: auto;
+      display: block;
+      margin: 0 auto;
+    }
+
+    /* 중랑구 path 스타일 + 위치/배율 적용 */
+    #Jungnang-gu{
+      fill: #c1ffd2;                  /* 면색 */
+      stroke: #fff;                   /* 테두리 */
+      stroke-width: 2;                /* 선 두께 */
+      vector-effect: non-scaling-stroke; /* 확대해도 선두께 고정 */
+      transform-box: fill-box;        /* 변환 기준을 path 박스로 */
+      transform-origin: center;       /* 변환 중심 */
+      transform: translate(var(--jn-x), var(--jn-y)) scale(var(--jn-scale)); /* 위치/배율 */
+      transition: transform .2s ease; /* 조정시 부드럽게 */
+    }
+
+    .list-card{ padding: 18px 20px 22px; } /* 리스트 카드 영역 */
+    .list-title{ font-weight: 700; font-size: 17px; margin-bottom: 6px; } /* 리스트 제목 */
+    .list-sub{ font-size: 13px; color: #777; margin-bottom: 14px; } /* 안내 문구 */
+
+    .restaurant-list{ /* 맛집 목록 래퍼 */
+      display: flex; flex-direction: column; gap: 12px; padding-right: 4px;
+    }
+
+    .restaurant-card{ /* 개별 맛집 카드 */
+      display: block;
+      border-radius: 14px;
+      padding: 12px 14px;
+      background: #f7f5ee;
+      color: inherit;
+      text-decoration: none;
+      transition: background .15s ease, transform .15s ease, box-shadow .15s ease;
+    }
+    .restaurant-card:hover{
+      background: #f2eddc;
+      transform: translateY(-1px);
+      box-shadow: 0 4px 10px rgba(0,0,0,.06);
+    }
+
+    .restaurant-name{ font-weight: 700; font-size: 15px; margin-bottom: 4px; } /* 가게명 */
+    .restaurant-desc{ font-size: 12px; color: #777; line-height: 1.45; word-break: keep-all; } /* 주소 */
+    .nv-badge{ /* 네이버 배지 */
+      display: inline-block; padding: 2px 8px; border-radius: 10px;
+      background: #e1edff; border: 1px solid #cfe0ff; font-size: 12px; margin-left: 6px;
+    }
+
+    footer{ /* 푸터 */
+      text-align: center; padding: 18px 10px 28px; font-size: 14px;
+      color: #666; border-top: 1px solid #e3dccb;
+    }
+  </style> 
+</head>
+
+<body> <!-- 본문 시작 -->
+  <header> <!-- 상단 영역 -->
+    <a class="back-link" href="./index.html" aria-label="서울 맛집 지도 홈으로">←</a> <!-- 뒤로가기 -->
+    <div class="title-badge"><h1>중랑구</h1></div> <!-- 제목 -->
+    <p class="subtitle">서울 중랑구 맛집 지도</p> <!-- 부제 -->
+  </header>
+
+  <main>
+    <section class="layout"> <!-- 2열 레이아웃 -->
+
+      <div class="map-card" id="mapCard"> <!-- 좌: 지도 카드 -->
+        <div class="map-inner">
+          <div class="map-title">중랑구 지도</div> <!-- 소제목 -->
+          <div class="map-stage"> <!-- SVG 영역 -->
+            <svg viewBox="0 0 1400 1400" preserveAspectRatio="xMidYMid meet" aria-hidden="true">
+              <!-- ▼▼ 메인 인덱스에서 복사한 중랑구 path (수정 금지, 위치/배율은 CSS 변수로만 조정) ▼▼ -->
+              <path id="Jungnang-gu" d="M1120.1,474.238  c4.662,7.841,18.324,6.681,27.006,10.502c-2.287,12.067,11.305,15.833,13.004,24.506c1.773,9.058-4.662,14.91-5.502,24.005  c-4.322,4.18-9.531,7.472-13.004,12.502c0,0.334,0,0.667,0,1c-0.832,3.84-0.832,11.164,0,15.003c0.725,3.943,3.436,5.9,4.502,9.502  c0,3.334,0,6.668,0,10.002c-10.604,7.43-3.115,20.208-6.502,32.507c-1.73,6.284-15.746,14.712-19.004,20.505  c-1.561,2.773-1.363,6.369-2.5,8.502c-3.455,6.476-15.533,10.445-16.504,17.504c-0.502,3.64,2.662,6.176,4,9.002  c0,2.334,0,4.668,0,7.002c-0.727,0.273-2.584-0.585-2.5,0.5c-16.391-2.901-23.908,8.259-36.008,11.002  c-11.813,2.678-22.666-0.268-36.51,2.5c-4.686-62.996-16.182-119.183-15.502-187.543c11.811-5.232,23.043-11.489,35.008-17.504  c6.033-3.034,10.494-5.943,19.504-5.501c1.684-0.317,4.645,0.645,5.502-0.5c2.666,0,5.334,0,8.002,0  c1.684-0.317,4.645,0.644,5.5-0.5c2.668,0,5.334,0,8.002,0c1.684-0.317,4.645,0.644,5.502-0.5  C1110.217,479.025,1114.6,476.073,1120.1,474.238z"/>
+              <!-- ▲▲ 중랑구 path 끝 ▲▲ -->
+            </svg>
+          </div>
+        </div>
+      </div>
+
+      <div class="list-card" id="listCard"> <!-- 우: 맛집 리스트 카드 -->
+        <div class="list-title">중랑구 맛집 리스트</div>
+        <div class="list-sub">항목을 클릭하면 네이버지도가 새 탭에서 열립니다.</div>
+
+        <div class="restaurant-list">
+          <!-- 1) 어글리스토브 상봉점 -->
+          <a class="restaurant-card" href="https://naver.me/xktdxhDC" target="_blank" rel="noopener">
+            <div class="restaurant-name">어글리스토브 상봉점 <span class="nv-badge">네이버지도</span></div>
+            <div class="restaurant-desc">서울 중랑구 상봉로 131 1층</div>
+          </a>
+
+          <!-- 2) 대호가 -->
+          <a class="restaurant-card" href="https://naver.me/5dAkxMsf" target="_blank" rel="noopener">
+            <div class="restaurant-name">대호가 <span class="nv-badge">네이버지도</span></div>
+            <div class="restaurant-desc">서울 중랑구 면목로92길 14 · 1층</div>
+          </a>
+
+          <!-- 3) 꿀삼겹 본점 -->
+          <a class="restaurant-card" href="https://naver.me/5kxMLe6s" target="_blank" rel="noopener">
+            <div class="restaurant-name">꿀삼겹 본점 <span class="nv-badge">네이버지도</span></div>
+            <div class="restaurant-desc">서울 중랑구 봉우재로 139</div>
+          </a>
+        </div>
+      </div>
+
+    </section>
+  </main>
+
+  <footer>2025066644 | 최지민</footer> <!-- 푸터 -->
+
+  <script> /* ===== 좌/우 카드 높이 동기화 ===== */
+    function syncLeftToRight(){                 /* 좌측 지도카드를 우측 리스트 높이에 맞춤 */
+      const left = document.getElementById('mapCard');
+      const right = document.getElementById('listCard');
+      if(!left || !right) return;
+
+      if (window.matchMedia('(max-width: 900px)').matches){ /* 모바일 폭이면 자동 높이 */
+        left.style.height = '';
+        return;
+      }
+
+      right.style.height = 'auto';              /* 초기화 */
+      const h = right.scrollHeight;             /* 실제 렌더 높이 */
+      left.style.height = h + 'px';             /* 좌측 높이 동기화 */
+    }
+
+    window.addEventListener('load', syncLeftToRight);                        /* 로드시 */
+    window.addEventListener('resize', () => requestAnimationFrame(syncLeftToRight)); /* 리사이즈시 */
+    if (document.fonts && document.fonts.ready){ document.fonts.ready.then(syncLeftToRight); } /* 폰트 로딩 후 */
+  </script>
+</body>
+</html>

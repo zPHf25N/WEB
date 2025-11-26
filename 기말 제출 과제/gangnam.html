@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <title>강남구 맛집 지도</title>
+  <style>
+    @font-face{
+      font-family:'PyeongChangPeace';
+      src:url('./PyeongChangPeace-Bold.otf') format('opentype'),
+          url('../PyeongChangPeace-Bold.otf') format('opentype');
+      font-weight:700; font-style:normal; font-display:swap;
+    }
+
+    *{box-sizing:border-box}
+    body{
+      margin:0; padding:0; background:#fffdf5;
+      font-family:'Noto Sans KR','Malgun Gothic','Apple SD Gothic Neo',system-ui,sans-serif;
+      color:#333;
+    }
+
+    header{ position:relative; text-align:center; padding:22px 20px 8px; }
+    .back-link{
+      position:absolute; left:16px; top:14px; text-decoration:none; color:inherit;
+      -webkit-tap-highlight-color:transparent;
+    }
+    .back-link:visited,.back-link:hover,.back-link:active,.back-link:focus{
+      color:inherit; text-decoration:none; outline:none;
+    }
+
+    .title-badge{ display:inline-block; background:#e1edff; border-radius:24px; padding:10px 36px; }
+    header h1{ margin:0; font-family:'PyeongChangPeace',serif; font-weight:700; font-size:44px; letter-spacing:2px; }
+    header .subtitle{ margin:12px 0 0; font-size:15px; color:#666; }
+
+    main{ max-width:1100px; margin:26px auto 40px; padding:0 20px 40px; }
+
+    .layout{
+      display:grid;
+      grid-template-columns:minmax(0,1.1fr) minmax(0,1.1fr);
+      gap:32px;
+      /* 서로 높이를 늘리지 않음 → 오른쪽 카드 아래 빈 공간 제거 */
+      align-items:start;
+    }
+    @media (max-width:900px){ .layout{ grid-template-columns:1fr; } }
+
+    .map-card,.list-card{ background:#fff; border-radius:20px; box-shadow:0 6px 18px rgba(0,0,0,.06); }
+
+    /* 왼쪽 지도 카드 */
+    .map-card{ padding:18px; overflow:hidden; }
+    .map-inner{ display:flex; flex-direction:column; height:100%; }
+    .map-title{ font-weight:700; font-size:17px; margin-bottom:10px; text-align:center; }
+    .map-stage{
+      flex:1; min-height:260px;
+      display:flex; align-items:center; justify-content:center;   /* 지도 정중앙 */
+    }
+    .map-stage svg{ width:min(300px,80%); height:auto; display:block; }
+    #Gangnam-gu{ fill:#8FABD4; stroke:#fff; stroke-width:2; }
+
+    /* 오른쪽 리스트 카드 — 내용만큼만 높이 */
+    .list-card{ padding:18px 20px 22px; height:auto; }
+    .list-title{ font-weight:700; font-size:17px; margin-bottom:6px; }
+    .list-sub{ font-size:13px; color:#777; margin-bottom:14px; }
+    .restaurant-list{ display:flex; flex-direction:column; gap:12px; padding-right:4px; }
+
+    .restaurant-card{
+      display:block; border-radius:14px; padding:12px 14px; background:#f7f5ee; color:inherit; text-decoration:none;
+      transition:background .15s ease, transform .15s ease, box-shadow .15s ease;
+    }
+    .restaurant-card:hover{ background:#f2eddc; transform:translateY(-1px); box-shadow:0 4px 10px rgba(0,0,0,.06); }
+    .restaurant-name{ font-weight:700; font-size:15px; margin-bottom:4px; }
+    .restaurant-desc{ font-size:12px; color:#777; line-height:1.45; word-break:keep-all; }
+    .nv-badge{ display:inline-block; padding:2px 8px; border-radius:10px; background:#e1edff; border:1px solid #cfe0ff; font-size:12px; margin-left:6px; }
+
+    /* 강남구 모양을 아래로 이동 */
+    #Gangnam-gu{
+      transform-box: fill-box;       /* SVG에서 transform 기준 잡기 */
+      transform-origin: center;      /* 중심 기준 변환 */
+      transform: translateY(36px);   /* ↓ 원하는 만큼(px/%로 조절) */
+    }
+
+    footer{ text-align:center; padding:18px 10px 28px; font-size:14px; color:#666; border-top:1px solid #e3dccb; }
+  </style>
+</head>
+<body>
+  <header>
+    <a class="back-link" href="./index.html" aria-label="서울 맛집 지도">←</a>
+    <div class="title-badge"><h1>강남구</h1></div>
+    <p class="subtitle">서울 강남구 맛집 지도</p>
+  </header>
+
+  <main>
+    <section class="layout">
+      <!-- 왼쪽: 지도 카드 (오른쪽 콘텐츠 높이에 맞춤) -->
+      <div class="map-card" id="mapCard">
+        <div class="map-inner">
+          <div class="map-title">강남구 지도</div>
+          <div></div>
+          <div></div>
+          <div class="map-stage">
+            <svg viewBox="760 860 420 420" preserveAspectRatio="xMidYMid meet" aria-hidden="true">
+              <path id="Gangnam-gu" d="M809.529,885.332  c3.344-3.51,7.164-6.168,11.002-9.502c3.58-3.111,6.844-7.933,11.002-9.503c3.145-1.187,8.471-1.302,12.504-2.001  c10.121-1.754,17.617-2.169,29.006-1.5c15.992,0.939,26.063,3.173,37.008,8.002c26.447,11.669,47.611,32.773,78.518,36.008  c1.088,2.58,0.227,7.111,0.502,10.503c0,3.334,0,6.668,0,10.003c0.32,2.012-0.65,5.317,0.5,6.501c0,2.834,0,5.668,0,8.502  c0,3.334,0,6.668,0,10.002c0.318,1.849-0.648,4.981,0.5,6.001c-1.123,9.712,2.514,13.063,5.5,19.005  c1.992,3.962,3.227,8.579,5.002,11.003c2.117,2.891,7.289,6.038,11.002,9.002c3.914,3.123,7.424,6.66,11.504,9.002  c4.016,2.305,9.201,4.087,14.002,6.501c4.635,2.33,9.215,5.753,13.504,7.002c12.207,3.557,27.744,3.449,39.508,7.001  c2.563,3.273,5.932,5.738,8.502,9.002c1.391,4.277,2.246,9.092,4.002,13.004c9.594,7.076,20.686,12.655,30.006,20.004  c0.875,6.341,2.055,12.245,3.002,18.004c0.984,6.002,1.041,12.711,3,18.004c1.092,2.949,4.381,6.836,6.502,10.003  c9.504,14.194,19.082,27.798,25.006,44.511c-5.541,1.964-14.252-0.62-20.006,2c-4.949,2.254-6.008,10.943-10.002,16.004  c-2.055,2.604-7.475,6.924-11.002,8.002c-5.742,1.754-12.551,0.227-18.004,1.5c-4.266,0.995-7.09,4.738-11.002,5.501  c-4.352,0.849-9.047-0.96-15.004-0.5c-4.955-4.302-7.02-10.321-12.504-15.003c-4.303-3.674-10.471-5.346-14.502-9.002  c-2.607-2.365-9.137-11.533-10.504-15.504c0-2.668,0-5.335,0-8.002c-0.313-1.52,0.641-4.308-0.5-5.002  c0.389-4.389-0.732-7.268-0.5-11.502c-4.393-2.852-7.592-7.5-13.002-9.502c-14.945-5.529-33.725,0.521-46.012,6.001  c-4.537,7.298-8.525,15.146-14.002,21.505c-16.326,0.345-28.281,5.061-40.51,9.502c-12.758-17.582-15.137-45.543-21.004-70.016  c-4.961-5.376-10.129-10.544-15.504-15.504c-6.775-3.227-14.982-5.021-20.006-10.002c-2.291-2.709-4.791-5.21-7.5-7.502  c-0.178-0.656-0.881-0.786-1.002-1.5c-2.125-2.543-4.457-4.877-7-7.002c-7.23-7.581-6.807-23.209-8.002-38.508  c-0.609-7.787,0.043-16.854-2.002-23.006c-2.199-6.624-12.922-11.019-15.502-18.004c-2.012-5.447-1.949-13.102-3.002-19.504  c-1.125-6.854-1.74-14.938-3.5-20.506c-2.148-6.789-6.955-12.942-10.002-19.004C815.576,898.467,812.641,891.889,809.529,885.332z"/>
+            </svg>
+          </div>
+        </div>
+      </div>
+
+      <!-- 오른쪽: 리스트 카드(내용만큼 높이) -->
+      <div class="list-card" id="listCard">
+        <div class="list-title">강남구 맛집 리스트</div>
+        <div class="list-sub">항목을 클릭하면 네이버지도가 새 탭에서 열립니다.</div>
+
+        <div class="restaurant-list">
+          <a class="restaurant-card" href="https://naver.me/5DDAPJWB" target="_blank" rel="noopener">
+            <div class="restaurant-name">도쿄사이카보 청담 <span class="nv-badge">네이버지도</span></div>
+            <div class="restaurant-desc">서울 강남구 도산대로101길 9</div>
+          </a>
+
+          <a class="restaurant-card" href="https://naver.me/FMTnXvTt" target="_blank" rel="noopener">
+            <div class="restaurant-name">카페포모 <span class="nv-badge">네이버지도</span></div>
+            <div class="restaurant-desc">서울 강남구 언주로124길 41 B1층 101호</div>
+          </a>
+
+          <a class="restaurant-card" href="https://naver.me/GFC4GLWc" target="_blank" rel="noopener">
+            <div class="restaurant-name">샤브오 <span class="nv-badge">네이버지도</span></div>
+            <div class="restaurant-desc">서울 강남구 도산대로49길 23 1층</div>
+          </a>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer>2025066644 | 최지민</footer>
+
+  <script>
+    // 오른쪽(내용 높이) → 왼쪽만 동일 높이로 맞춤
+    function syncLeftToRight(){
+      const left = document.getElementById('mapCard');
+      const right = document.getElementById('listCard');
+      if(!left || !right) return;
+
+      // 모바일에서는 해제
+      if (window.matchMedia('(max-width: 900px)').matches){
+        left.style.height = '';
+        return;
+      }
+
+      // 먼저 오른쪽은 자동 높이로
+      right.style.height = 'auto';
+
+      // 오른쪽 실제 콘텐츠 높이로 왼쪽을 고정
+      const h = right.scrollHeight;   // 패딩 포함 실제 렌더 높이
+      left.style.height = h + 'px';
+    }
+
+    window.addEventListener('load', syncLeftToRight);
+    window.addEventListener('resize', () => requestAnimationFrame(syncLeftToRight));
+    document.fonts && document.fonts.ready && document.fonts.ready.then(syncLeftToRight);
+  </script>
+</body>
+</html>

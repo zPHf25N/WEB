@@ -1,0 +1,255 @@
+<!DOCTYPE html> <!-- 문서 타입 -->
+<html lang="ko"> <!-- 한국어 페이지 -->
+<head> <!-- 메타/스타일 시작 -->
+  <meta charset="UTF-8" /> <!-- 인코딩 -->
+  <title>노원구 맛집 지도</title> <!-- 탭 제목 -->
+
+  <style> /* ================== 스타일 시작 ================== */
+    @font-face { /* 제목 폰트 등록 */
+      font-family: 'PyeongChangPeace'; /* 폰트 이름 */
+      src: url('./PyeongChangPeace-Bold.otf') format('opentype'); /* 경로/포맷 */
+      font-weight: 700; /* 두께 */
+      font-style: normal; /* 스타일 */
+      font-display: swap; /* 표시 전략 */
+    }
+
+    :root{ /* ▼ 노원구 위치/배율 조정 변수 (여기만 수정해서 배치 맞추기) ▼ */
+      --nw-x: -150%;       /* X축 이동 (음수=왼쪽, 양수=오른쪽) */
+      --nw-y: 30%;     /* Y축 이동 (음수=위,   양수=아래) */
+      --nw-scale: 1.8;     /* 확대/축소 배율 */
+    }
+
+    *{ box-sizing: border-box; } /* 박스 모델 통일 */
+
+    body{ /* 본문 기본 스타일 */
+      margin: 0; /* 기본 여백 제거 */
+      padding: 0; /* 기본 패딩 제거 */
+      background: #fffdf5; /* 배경색 */
+      color: #333; /* 글자색 */
+      font-family: 'Noto Sans KR','Malgun Gothic','Apple SD Gothic Neo',system-ui,sans-serif; /* 폰트 */
+    }
+
+    header{ /* 상단 헤더 */
+      position: relative; /* 뒤로가기 배치용 기준 */
+      text-align: center; /* 중앙 정렬 */
+      padding: 22px 20px 10px; /* 여백 */
+    }
+
+    .back-link{ /* 뒤로가기 링크 */
+      position: absolute; /* 절대 배치 */
+      left: 16px; /* 좌측 여백 */
+      top: 14px; /* 상단 여백 */
+      color: inherit; /* 부모 글자색 상속 */
+      text-decoration: none; /* 밑줄 제거 */
+      -webkit-tap-highlight-color: transparent; /* 모바일 탭 하이라이트 제거 */
+    }
+
+    .title-badge{ /* 제목 배지 */
+      display: inline-block; /* 인라인 블록 */
+      padding: 10px 36px; /* 내부 여백 */
+      background: #e1edff; /* 배경색 */
+      border-radius: 24px; /* 둥근 모서리 */
+    }
+
+    header h1{ /* 메인 제목 */
+      margin: 0; /* 외부 여백 제거 */
+      font-family: 'PyeongChangPeace',serif; /* 제목 폰트 */
+      font-weight: 700; /* 굵게 */
+      font-size: 44px; /* 크기 */
+      letter-spacing: 2px; /* 자간 */
+    }
+
+    header .subtitle{ /* 부제목 */
+      margin: 12px 0 0; /* 위쪽 여백 */
+      font-size: 15px; /* 크기 */
+      color: #666; /* 색상 */
+    }
+
+    main{ /* 메인 래퍼 */
+      max-width: 1100px; /* 최대 폭 */
+      margin: 26px auto 40px; /* 센터링 */
+      padding: 0 20px 40px; /* 패딩 */
+    }
+
+    .layout{ /* 2열 그리드 */
+      display: grid; /* 그리드 사용 */
+      grid-template-columns: minmax(0,1.1fr) minmax(0,1.1fr); /* 컬럼 비율 */
+      gap: 32px; /* 칸 간격 */
+      align-items: start; /* 상단 정렬 */
+    }
+
+    @media (max-width: 900px){ /* 모바일 대응 */
+      .layout{ grid-template-columns: 1fr; } /* 1열 전환 */
+    }
+
+    .map-card,.list-card{ /* 카드 공통 스타일 */
+      background: #fff; /* 배경 흰색 */
+      border-radius: 20px; /* 둥근 모서리 */
+      box-shadow: 0 6px 18px rgba(0,0,0,.06); /* 그림자 */
+    }
+
+    .map-card{ padding: 18px; overflow: hidden; } /* 지도 카드 */
+    .map-inner{ display: flex; flex-direction: column; height: 100%; } /* 내부 래퍼 */
+    .map-title{ font-weight: 700; font-size: 17px; margin-bottom: 10px; text-align: center; } /* 소제목 */
+
+    .map-stage{ /* SVG 무대 */
+      flex: 1; /* 가용 높이 채우기 */
+      min-height: 440px; /* 최소 높이 */
+      display: flex; /* 플렉스 */
+      align-items: center; /* 수직 중앙 */
+      justify-content: center; /* 수평 중앙 */
+    }
+
+    .map-stage svg{ /* SVG 크기 */
+      width: clamp(520px, 60vw, 760px); /* 반응형 폭 */
+      height: auto; /* 자동 높이 */
+      display: block; /* 블록화 */
+      margin: 0 auto; /* 중앙 정렬 */
+    }
+
+    /* 노원구 path 스타일 및 위치/배율 적용 */
+    #Nowon-gu{ /* 노원구 Path 선택자 */
+      fill: #c6fff4; /* 면색 */
+      stroke: #fff; /* 테두리색 */
+      stroke-width: 2; /* 선 두께 */
+      vector-effect: non-scaling-stroke; /* 확대해도 선두께 유지 */
+      transform-box: fill-box; /* 변환 기준 */
+      transform-origin: center; /* 변환 중심 */
+      transform: translate(var(--nw-x), var(--nw-y)) scale(var(--nw-scale)); /* 위치/배율 */
+      transition: transform .2s ease; /* 조정 부드럽게 */
+    }
+
+    .list-card{ padding: 18px 20px 22px; } /* 리스트 카드 패딩 */
+    .list-title{ font-weight: 700; font-size: 17px; margin-bottom: 6px; } /* 리스트 제목 */
+    .list-sub{ font-size: 13px; color: #777; margin-bottom: 14px; } /* 안내 문구 */
+
+    .restaurant-list{ /* 맛집 목록 래퍼 */
+      display: flex; /* 플렉스 컬럼 */
+      flex-direction: column; /* 세로 배치 */
+      gap: 12px; /* 아이템 간격 */
+      padding-right: 4px; /* 스크롤바 여유 */
+    }
+
+    .restaurant-card{ /* 개별 맛집 카드(링크) */
+      display: block; /* 블록 링크 */
+      border-radius: 14px; /* 둥근 모서리 */
+      padding: 12px 14px; /* 패딩 */
+      background: #f7f5ee; /* 배경 */
+      color: inherit; /* 글자색 상속 */
+      text-decoration: none; /* 밑줄 제거 */
+      transition: background .15s ease, transform .15s ease, box-shadow .15s ease; /* 호버 효과 */
+    }
+    .restaurant-card:hover{ /* 호버 시 */
+      background: #f2eddc; /* 배경 살짝 진하게 */
+      transform: translateY(-1px); /* 살짝 띄우기 */
+      box-shadow: 0 4px 10px rgba(0,0,0,.06); /* 그림자 */
+    }
+
+    .restaurant-name{ font-weight: 700; font-size: 15px; margin-bottom: 4px; } /* 가게명 */
+    .restaurant-desc{ font-size: 12px; color: #777; line-height: 1.45; word-break: keep-all; } /* 주소 */
+    .nv-badge{ /* 네이버 배지 */
+      display: inline-block; /* 인라인 블록 */
+      padding: 2px 8px; /* 패딩 */
+      border-radius: 10px; /* 둥근 */
+      background: #e1edff; /* 배경 */
+      border: 1px solid #cfe0ff; /* 테두리 */
+      font-size: 12px; /* 크기 */
+      margin-left: 6px; /* 좌측 여백 */
+    }
+
+    footer{ /* 푸터 */
+      text-align: center; /* 중앙 정렬 */
+      padding: 18px 10px 28px; /* 패딩 */
+      font-size: 14px; /* 글자 크기 */
+      color: #666; /* 색상 */
+      border-top: 1px solid #e3dccb; /* 상단 보더 */
+    }
+  </style> 
+</head>
+
+<body> <!-- 본문 시작 -->
+  <header> <!-- 상단 헤더 -->
+    <a class="back-link" href="./index.html" aria-label="서울 맛집 지도 홈으로">←</a> <!-- 뒤로가기 -->
+    <div class="title-badge"><h1>노원구</h1></div> <!-- 제목 배지+제목 -->
+    <p class="subtitle">서울 노원구 맛집 지도</p> <!-- 부제목 -->
+  </header>
+
+  <main> <!-- 메인 컨텐츠 -->
+    <section class="layout"> <!-- 2열 레이아웃 시작 -->
+
+      <div class="map-card" id="mapCard"> <!-- 좌: 지도 카드 -->
+        <div class="map-inner"> <!-- 내부 정렬 -->
+          <div class="map-title">노원구 지도</div> <!-- 지도 소제목 -->
+          <div class="map-stage"> <!-- SVG 스테이지 -->
+            <svg viewBox="0 0 1400 1400" preserveAspectRatio="xMidYMid meet" aria-hidden="true"> <!-- 반응형 SVG -->
+              <!-- ▼▼ 메인 인덱스에서 복사한 노원구 path (d 값 수정 금지 / 위치는 CSS 변수로만 조정) ▼▼ -->
+              <path id="Nowon-gu" d="M1083.592,305.699  c-0.51,4.537-3.662,5.613-4.502,10.002c-0.775,4.05,0.262,18.509,1.5,23.005c0.885,3.208,6.793,14.643,9.002,16.004  c5.967,3.672,16.053,1.403,23.506,3c8.109,1.738,14.93,5.567,22.006,7.501c2.74,11.227,0.236,20.766,3,30.507  c2.139,7.545,9.795,12.583,7.002,24.006c-3.18,4.49-5.305,10.033-9.002,14.003c-4.596,1.663-8.748,0.512-12.504,2.501  c-3.117,1.651-7.98,9.404-8.502,14.003c-0.748,6.625,2.275,12.594,6.002,16.504c-0.713,1.287-1.615,2.386-1.5,4.501  c-5.883,1.452-10.193,4.478-18.504,3.501c-1.684,0.316-4.646-0.645-5.502,0.5c-2.668,0-5.334,0-8.002,0  c-1.684,0.316-4.645-0.645-5.502,0.5c-2.666,0-5.334,0-8.002,0c-1.684,0.316-4.645-0.645-5.5,0.5  c-12.211,0.197-21.813,7.38-31.008,12.003c-8.523,4.285-16.541,7.522-24.006,12.003c-11.572-2.931-23.703-5.303-35.008-8.502  c-17.121-22.554-34.861-47.157-48.51-71.517c6.645-0.522,14.094-0.241,20.004-1.5c3.156-9.429,1.619-20.374,3.5-29.507  c1.412-6.854,5.945-13.942,7.502-21.505c2.24-10.87,1.836-24.517,3-37.009c0.533-5.733,1.441-11.911,2-18.004  c0.537-5.876,1.732-12.743,1-17.504c-1.043-6.773-5.283-14.015-8.002-21.005c-2.588-6.651-7.232-14.544-8.002-21.005  c-0.441-3.712,0.98-8.423,1.5-13.003c0.482-4.25,0.182-9.028,1-13.003c2.141-10.392,9.006-21.348,11.504-33.008  c2.17-10.125,0.41-21.711,3-30.507c5.758-9.167,15.742-8.554,26.506-14.503c3.541-1.957,8.979-6.144,12.004-9.002  c3.121-2.951,5.645-8.404,8.502-9.502c3.232-1.244,10.299-1.729,14.002-1c3.074,0.605,6.523,4.829,10.002,7.502  c7.916,6.081,13.107,9.773,20.506,15.503c3.42,2.65,6.877,6.662,10.002,8.002c8.432,3.616,15.584,1.682,25.506,5.501  c4.303,15.436-2.008,19.555-8.002,28.506c-3.225,4.817-8.416,10.662-8.502,15.503c-0.078,4.409,5.43,13.495,7.502,16.504  c3.346,4.858,12.357,11.303,14.004,17.004c2.277,7.894-0.465,15.084,1.5,26.006c-3.293,4.746-15.668,6.805-18.004,12.003  c-1.809,4.022,0.287,9.412-0.5,16.003C1083.416,300.207,1082.436,304.021,1083.592,305.699z"/>
+              <!-- ▲▲ 노원구 path 끝 ▲▲ -->
+            </svg> <!-- SVG 끝 -->
+          </div> <!-- map-stage 끝 -->
+        </div> <!-- map-inner 끝 -->
+      </div> <!-- map-card 끝 -->
+
+      <div class="list-card" id="listCard"> <!-- 우: 맛집 리스트 카드 -->
+        <div class="list-title">노원구 맛집 리스트</div> <!-- 리스트 제목 -->
+        <div class="list-sub">항목을 클릭하면 네이버지도가 새 탭에서 열립니다.</div> <!-- 안내 -->
+
+        <div class="restaurant-list"> <!-- 맛집 목록 래퍼 -->
+
+          <!-- 1) 트위그 페스츄리 -->
+          <a class="restaurant-card" href="https://naver.me/5b0eXUkx" target="_blank" rel="noopener"> <!-- 링크 카드 -->
+            <div class="restaurant-name">
+              트위그 페스츄리
+              <span class="nv-badge">네이버지도</span>
+            </div> <!-- 이름/배지 -->
+            <div class="restaurant-desc">서울 노원구 동일로182길 50 1층</div> <!-- 주소 -->
+          </a> <!-- 항목 끝 -->
+
+          <!-- 2) 숟가락반상 마실 -->
+          <a class="restaurant-card" href="https://naver.me/GhSWEf1S" target="_blank" rel="noopener"> <!-- 링크 카드 -->
+            <div class="restaurant-name">
+              숟가락반상 마실
+              <span class="nv-badge">네이버지도</span>
+            </div> <!-- 이름/배지 -->
+            <div class="restaurant-desc">서울 노원구 노원로 412</div> <!-- 주소 -->
+          </a> <!-- 항목 끝 -->
+
+          <!-- 3) 당케 -->
+          <a class="restaurant-card" href="https://naver.me/Fc5kaFUw" target="_blank" rel="noopener"> <!-- 링크 카드 -->
+            <div class="restaurant-name">
+              당케
+              <span class="nv-badge">네이버지도</span>
+            </div> <!-- 이름/배지 -->
+            <div class="restaurant-desc">서울 노원구 한글비석로24길 49 남양빌딩 1층 102호 당케</div> <!-- 주소 -->
+          </a> <!-- 항목 끝 -->
+
+        </div> <!-- restaurant-list 끝 -->
+      </div> <!-- list-card 끝 -->
+
+    </section> <!-- 레이아웃 섹션 끝 -->
+  </main> <!-- 메인 끝 -->
+
+  <footer>2025066644 | 최지민</footer> <!-- 푸터 -->
+
+  <script> /* ===== 좌/우 카드 높이 동기화 스크립트 ===== */
+    function syncLeftToRight(){ /* 좌측 지도카드를 우측 리스트 높이에 맞춤 */
+      const left = document.getElementById('mapCard'); /* 좌측 카드 참조 */
+      const right = document.getElementById('listCard'); /* 우측 카드 참조 */
+      if(!left || !right) return; /* 요소 없으면 중단 */
+
+      if (window.matchMedia('(max-width: 900px)').matches){ /* 모바일 폭일 때 */
+        left.style.height = ''; /* 자동 높이 */
+        return; /* 종료 */
+      }
+
+      right.style.height = 'auto'; /* 초기화 */
+      const h = right.scrollHeight; /* 실제 렌더 높이 측정 */
+      left.style.height = h + 'px'; /* 좌측 높이 동기화 */
+    }
+
+    window.addEventListener('load', syncLeftToRight); /* 로드시 동기화 */
+    window.addEventListener('resize', () => requestAnimationFrame(syncLeftToRight)); /* 리사이즈시 동기화 */
+    if (document.fonts && document.fonts.ready){ document.fonts.ready.then(syncLeftToRight); } /* 폰트 로딩 후 동기화 */
+  </script> <!-- 스크립트 끝 -->
+</body> <!-- 본문 끝 -->
+</html> <!-- 문서 끝 -->

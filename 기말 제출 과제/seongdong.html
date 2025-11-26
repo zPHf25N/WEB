@@ -1,0 +1,283 @@
+<!DOCTYPE html> <!-- 문서 타입 -->
+<html lang="ko"> <!-- 문서 언어: 한국어 -->
+<head> <!-- 문서 메타/스타일 영역 시작 -->
+  <meta charset="UTF-8" /> <!-- 인코딩 설정 -->
+  <title>성동구 맛집 지도</title> <!-- 브라우저 탭 제목 -->
+
+  <style> /* ================== 스타일 시작 ================== */
+    @font-face { /* 제목용 커스텀 폰트 등록 */
+      font-family: 'PyeongChangPeace'; /* 폰트 이름 식별자 */
+      src: url('./PyeongChangPeace-Bold.otf') format('opentype'); /* 폰트 파일 경로 */
+      font-weight: 700; /* 굵기 */
+      font-style: normal; /* 스타일 */
+      font-display: swap; /* 먼저 시스템 폰트로 표시 후 교체 */
+    }
+
+    :root{ /* 성동구 위치/배율 조정 변수: 필요하면 여기 숫자만 조정 */
+      --sd-x: -90%;    /* X이동(음수=왼쪽, 양수=오른쪽) */
+      --sd-y: -210%;  /* Y이동(음수=위, 양수=아래) */
+      --sd-scale: 2.5; /* 확대/축소 배율 */
+    }
+
+    *{ box-sizing: border-box; } /* 박스 모델 일원화 */
+    body{ /* 문서 기본 스타일 */
+      margin: 0; /* 바깥여백 제거 */
+      padding: 0; /* 안쪽여백 제거 */
+      background: #fffdf5; /* 배경색(크림톤) */
+      color: #333; /* 본문 글자색 */
+      font-family: 'Noto Sans KR','Malgun Gothic','Apple SD Gothic Neo',system-ui,sans-serif; /* 기본 폰트 */
+    }
+
+    header{ /* 상단 헤더 영역 */
+      position: relative; /* 뒤로가기 절대배치 기준 */
+      text-align: center; /* 가운데 정렬 */
+      padding: 22px 20px 10px; /* 안쪽여백 */
+    }
+
+    .back-link{ /* 뒤로가기 링크 스타일 */
+      position: absolute; /* 헤더 기준 절대배치 */
+      left: 16px; /* 왼쪽 여백 */
+      top: 14px; /* 위 여백 */
+      color: inherit; /* 색상 상속 */
+      text-decoration: none; /* 밑줄 제거 */
+      -webkit-tap-highlight-color: transparent; /* 모바일 탭 하이라이트 제거 */
+    }
+
+    .title-badge{ /* 제목 배지 */
+      display: inline-block; /* 배지 형태 */
+      padding: 10px 36px; /* 안쪽여백 */
+      background: #e1edff; /* 배경색(연한 블루) */
+      border-radius: 24px; /* 둥근 모서리 */
+    }
+
+    header h1{ /* 페이지 타이틀 */
+      margin: 0; /* 바깥여백 제거 */
+      font-family: 'PyeongChangPeace',serif; /* 커스텀 폰트 적용 */
+      font-weight: 700; /* 굵기 */
+      font-size: 44px; /* 크기 */
+      letter-spacing: 2px; /* 자간 */
+    }
+
+    header .subtitle{ /* 부제목 */
+      margin: 12px 0 0; /* 바깥여백 */
+      font-size: 15px; /* 크기 */
+      color: #666; /* 색상 */
+    }
+
+    main{ /* 본문 컨테이너 */
+      max-width: 1100px; /* 최대 너비 */
+      margin: 26px auto 40px; /* 가운데 정렬 */
+      padding: 0 20px 40px; /* 안쪽여백 */
+    }
+
+    .layout{ /* 좌우 2열 레이아웃 */
+      display: grid; /* 그리드 활성화 */
+      grid-template-columns: minmax(0,1.1fr) minmax(0,1.1fr); /* 두 컬럼 비율 */
+      gap: 32px; /* 컬럼 간격 */
+      align-items: start; /* 상단 정렬 */
+    }
+
+    @media (max-width: 900px){ /* 화면 폭 900px 이하일 때 */
+      .layout{ grid-template-columns: 1fr; } /* 1열로 전환 */
+    }
+
+    .map-card,.list-card{ /* 카드 공통 스타일 */
+      background: #fff; /* 카드 배경 흰색 */
+      border-radius: 20px; /* 둥근 모서리 */
+      box-shadow: 0 6px 18px rgba(0,0,0,.06); /* 은은한 그림자 */
+    }
+
+    .map-card{ /* 지도 카드 */
+      padding: 18px; /* 안쪽여백 */
+      overflow: hidden; /* 넘침 숨김 */
+    }
+
+    .map-inner{ /* 지도 카드 내부 래퍼 */
+      display: flex; /* 플렉스 컨테이너 */
+      flex-direction: column; /* 세로 정렬 */
+      height: 100%; /* 높이 채움 */
+    }
+
+    .map-title{ /* 지도 소제목 */
+      font-weight: 700; /* 굵기 */
+      font-size: 17px; /* 크기 */
+      margin-bottom: 10px; /* 아래 여백 */
+      text-align: center; /* 가운데 정렬 */
+    }
+
+    .map-stage{ /* SVG 표시 영역 */
+      flex: 1; /* 남는 공간 채움 */
+      min-height: 440px; /* 최소 높이 확보 */
+      display: flex; /* 중앙 배치용 플렉스 */
+      align-items: center; /* 수직 중앙 */
+      justify-content: center; /* 수평 중앙 */
+    }
+
+    .map-stage svg{ /* SVG 크기 제어 */
+      width: clamp(520px, 60vw, 760px); /* 반응형 너비 */
+      height: auto; /* 비율 유지 */
+      display: block; /* 블록화 */
+      margin: 0 auto; /* 가운데 정렬 */
+    }
+
+    /* 성동구 path 스타일 + 위치/배율 적용 */
+    #Seongdong-gu{ /* 메인 SVG에서 복사한 성동구 경계 path */
+      fill: #ffd3bb; /* 면색 */
+      stroke: #fff; /* 테두리 흰색 */
+      stroke-width: 2; /* 테두리 두께 */
+      vector-effect: non-scaling-stroke; /* 스케일해도 선두께 유지 */
+      transform-box: fill-box; /* 변환 기준 상자 */
+      transform-origin: center; /* 변환 기준점 중앙 */
+      transform: translate(var(--sd-x), var(--sd-y)) scale(var(--sd-scale)); /* 위치/배율 적용 */
+      transition: transform .2s ease; /* 전환 애니메이션 */
+    }
+
+    .list-card{ /* 우측 리스트 카드 */
+      padding: 18px 20px 22px; /* 안쪽여백 */
+    }
+
+    .list-title{ /* 리스트 제목 */
+      font-weight: 700; /* 굵기 */
+      font-size: 17px; /* 크기 */
+      margin-bottom: 6px; /* 아래 여백 */
+    }
+
+    .list-sub{ /* 안내 문구 */
+      font-size: 13px; /* 크기 */
+      color: #777; /* 색상 */
+      margin-bottom: 14px; /* 아래 여백 */
+    }
+
+    .restaurant-list{ /* 맛집 목록 래퍼 */
+      display: flex; /* 플렉스 */
+      flex-direction: column; /* 세로 나열 */
+      gap: 12px; /* 항목 간 간격 */
+      padding-right: 4px; /* 스크롤 여백 */
+    }
+
+    .restaurant-card{ /* 개별 맛집 카드 링크 */
+      display: block; /* 블록링크 */
+      border-radius: 14px; /* 둥근 모서리 */
+      padding: 12px 14px; /* 안쪽여백 */
+      background: #f7f5ee; /* 배경(연한 베이지) */
+      color: inherit; /* 글자색 상속 */
+      text-decoration: none; /* 밑줄 제거 */
+      transition: background .15s ease, transform .15s ease, box-shadow .15s ease; /* 호버 효과 */
+    }
+
+    .restaurant-card:hover{ /* 호버 시 효과 */
+      background: #f2eddc; /* 배경 조금 더 진하게 */
+      transform: translateY(-1px); /* 살짝 떠오름 */
+      box-shadow: 0 4px 10px rgba(0,0,0,.06); /* 그림자 */
+    }
+
+    .restaurant-name{ /* 가게명 */
+      font-weight: 700; /* 굵기 */
+      font-size: 15px; /* 크기 */
+      margin-bottom: 4px; /* 아래 여백 */
+    }
+
+    .restaurant-desc{ /* 주소 */
+      font-size: 12px; /* 크기 */
+      color: #777; /* 색상 */
+      line-height: 1.45; /* 줄간격 */
+      word-break: keep-all; /* 한국어 어절 유지 */
+    }
+
+    .nv-badge{ /* 네이버지도 배지 */
+      display: inline-block; /* 인라인블록 */
+      padding: 2px 8px; /* 안쪽여백 */
+      border-radius: 10px; /* 둥근 모서리 */
+      background: #e1edff; /* 배경 */
+      border: 1px solid #cfe0ff; /* 테두리 */
+      font-size: 12px; /* 크기 */
+      margin-left: 6px; /* 좌측 여백 */
+    }
+
+    footer{ /* 페이지 하단 푸터 */
+      text-align: center; /* 가운데 정렬 */
+      padding: 18px 10px 28px; /* 안쪽여백 */
+      font-size: 14px; /* 크기 */
+      color: #666; /* 색상 */
+      border-top: 1px solid #e3dccb; /* 상단 경계선 */
+    }
+  </style> <!-- ================== 스타일 끝 ================== -->
+</head> <!-- 메타/스타일 영역 끝 -->
+<body> <!-- 본문 시작 -->
+
+  <header> <!-- 헤더 영역 시작 -->
+    <a class="back-link" href="./index.html" aria-label="서울 맛집 지도 홈으로">←</a> <!-- 뒤로가기 -->
+    <div class="title-badge"><h1>성동구</h1></div> <!-- 타이틀 배지+제목 -->
+    <p class="subtitle">서울 성동구 맛집 지도</p> <!-- 부제 -->
+  </header> <!-- 헤더 영역 끝 -->
+
+  <main> <!-- 메인 콘텐츠 시작 -->
+    <section class="layout"> <!-- 좌우 2열 레이아웃 시작 -->
+
+      <div class="map-card" id="mapCard"> <!-- 좌측 지도 카드 -->
+        <div class="map-inner"> <!-- 내부 래퍼 -->
+          <div class="map-title">성동구 지도</div> <!-- 지도 소제목 -->
+          <div class="map-stage"> <!-- SVG 표시 무대 -->
+            <svg viewBox="0 0 1400 1400" preserveAspectRatio="xMidYMid meet" aria-hidden="true"> <!-- 서울 좌표계 -->
+              <!-- ▼▼ 여기 d 값은 메인 인덱스의 성동구 path로 교체해 주면 돼 ▼▼ -->
+              <path id="Seongdong-gu" d="M874.543,701.29c2.168,0,4.334,0,6.502,0  c5.318-3.184,4.223-12.782,14.504-11.002c0.693,1.141,3.48,0.187,5,0.5c9.426-0.09,18.045,0.627,27.006,1  c2.555,7.281,4.742,14.93,7.002,22.506c24.572,8.603,50.193,16.154,73.018,26.506c-4.559,27.309-8.412,49.525-20.506,68.516  c-4.107,6.451-11.859,11.41-14.002,18.004c-1.691,5.203-0.707,11.029-1.5,16.004c-1.453,9.091-4.732,16.918-6.502,26.006  c-21.135-10.752-42.318-26.766-69.516-33.008c-5.611-1.287-13.537-1.091-20.506-1.5c-20.389-1.197-34.918,0.928-52.512,5.001  c-3.926-15.579-7.852-31.157-12.002-46.511c6.348-10.322,10.541-22.799,16.504-33.508c2.709-2.291,5.209-4.792,7.502-7.502  c2.875-2.458,5.543-5.125,8-8.002c5.986-5.184,8.691-13.647,13.004-20.504c1.156-1.679,0.176-5.493,0.5-8.002  c0-2.834,0-5.668,0-8.502c1.15-1.184,0.18-4.489,0.5-6.501c0-2.5,0-5.001,0-7.501c4.824,2.01,6.006,7.664,13.004,7.501  C870.236,701.93,873.023,700.976,874.543,701.29z"/>
+              <!-- ▲▲ 성동구 path 끝 ▲▲ -->
+            </svg> <!-- /SVG 끝 -->
+          </div> <!-- /map-stage 끝 -->
+        </div> <!-- /map-inner 끝 -->
+      </div> <!-- /map-card 끝 -->
+
+      <div class="list-card" id="listCard"> <!-- 우측 맛집 리스트 카드 -->
+        <div class="list-title">성동구 맛집 리스트</div> <!-- 섹션 제목 -->
+        <div class="list-sub">항목을 클릭하면 네이버지도가 새 탭에서 열립니다.</div> <!-- 안내 문구 -->
+
+        <div class="restaurant-list"> <!-- 맛집 목록 시작 -->
+
+          <!-- 1) 메이타왕에그타르트크래프트 -->
+          <a class="restaurant-card" href="https://naver.me/xYvVQsm8" target="_blank" rel="noopener">
+            <div class="restaurant-name">메이타왕에그타르트크래프트 <span class="nv-badge">네이버지도</span></div>
+            <div class="restaurant-desc">서울 성동구 연무장길 5 1층 101호</div>
+          </a>
+
+          <!-- 2) 당도 -->
+          <a class="restaurant-card" href="https://naver.me/GoiIz7ad" target="_blank" rel="noopener">
+            <div class="restaurant-name">당도 <span class="nv-badge">네이버지도</span></div>
+            <div class="restaurant-desc">서울 성동구 왕십리로 80-1 1층 3호</div>
+          </a>
+
+          <!-- 3) 밀카페 우프 -->
+          <a class="restaurant-card" href="https://naver.me/ID3TBUBi" target="_blank" rel="noopener">
+            <div class="restaurant-name">밀카페 우프 <span class="nv-badge">네이버지도</span></div>
+            <div class="restaurant-desc">서울 성동구 서울숲4길 16-19 2층</div>
+          </a>
+
+        </div> <!-- /restaurant-list 끝 -->
+      </div> <!-- /list-card 끝 -->
+
+    </section> <!-- /layout 끝 -->
+  </main> <!-- 메인 콘텐츠 끝 -->
+
+  <footer>2025066644 | 최지민</footer> <!-- 하단 푸터 -->
+
+  <script> /* ===== 좌/우 카드 높이 동기화 스크립트 ===== */
+    function syncLeftToRight(){ /* 좌측 지도카드를 우측 리스트 높이에 맞추기 */
+      const left = document.getElementById('mapCard');   /* 좌측 카드 노드 */
+      const right = document.getElementById('listCard'); /* 우측 카드 노드 */
+      if(!left || !right) return; /* 요소가 없으면 종료 */
+
+      if (window.matchMedia('(max-width: 900px)').matches){ /* 모바일 폭일 때 */
+        left.style.height = ''; /* 자동 높이 */
+        return; /* 종료 */
+      }
+
+      right.style.height = 'auto'; /* 초기화 */
+      const h = right.scrollHeight; /* 실제 렌더 높이 계산 */
+      left.style.height = h + 'px'; /* 좌측 카드 높이 일치 */
+    }
+
+    window.addEventListener('load', syncLeftToRight); /* 문서 로드 시 동기화 */
+    window.addEventListener('resize', () => requestAnimationFrame(syncLeftToRight)); /* 리사이즈 시 동기화 */
+    if (document.fonts && document.fonts.ready){ document.fonts.ready.then(syncLeftToRight); } /* 폰트 로딩 후 동기화 */
+  </script> <!-- 스크립트 끝 -->
+</body> <!-- 본문 끝 -->
+</html> <!-- 문서 끝 -->

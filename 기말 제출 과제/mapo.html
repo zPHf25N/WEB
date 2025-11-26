@@ -1,0 +1,246 @@
+<!DOCTYPE html> <!-- 문서 타입 -->
+<html lang="ko"> <!-- 한국어 페이지 -->
+<head> <!-- 메타/스타일 시작 -->
+  <meta charset="UTF-8" /> <!-- 인코딩 -->
+  <title>마포구 맛집 지도</title> <!-- 탭 제목 -->
+
+  <style> /* ================== 스타일 시작 ================== */
+    @font-face { /* 제목 폰트 등록 */
+      font-family: 'PyeongChangPeace'; /* 폰트 이름 */
+      src: url('./PyeongChangPeace-Bold.otf') format('opentype'); /* 경로/포맷 */
+      font-weight: 700; /* 두께 */
+      font-style: normal; /* 스타일 */
+      font-display: swap; /* 표시 전략 */
+    }
+
+    :root{ /* ▼ 마포구 위치/배율 조정 변수 (여기만 수정해서 배치 맞추기) ▼ */
+      --mp-x: 60%;       /* X축 이동 (음수=왼쪽, 양수=오른쪽) */
+      --mp-y: -120%;       /* Y축 이동 (음수=위,   양수=아래) */
+      --mp-scale: 2; /* 확대/축소 배율 */
+    }
+
+    *{ box-sizing: border-box; } /* 박스 모델 통일 */
+
+    body{ /* 본문 기본 스타일 */
+      margin: 0; /* 기본 여백 제거 */
+      padding: 0; /* 기본 패딩 제거 */
+      background: #fffdf5; /* 배경색 */
+      color: #333; /* 글자색 */
+      font-family: 'Noto Sans KR','Malgun Gothic','Apple SD Gothic Neo',system-ui,sans-serif; /* 폰트 */
+    }
+
+    header{ /* 상단 헤더 */
+      position: relative; /* 뒤로가기 배치용 기준 */
+      text-align: center; /* 중앙 정렬 */
+      padding: 22px 20px 10px; /* 여백 */
+    }
+
+    .back-link{ /* 뒤로가기 링크 */
+      position: absolute; /* 절대 배치 */
+      left: 16px; /* 좌측 여백 */
+      top: 14px; /* 상단 여백 */
+      color: inherit; /* 부모 글자색 상속 */
+      text-decoration: none; /* 밑줄 제거 */
+      -webkit-tap-highlight-color: transparent; /* 모바일 탭 하이라이트 제거 */
+    }
+
+    .title-badge{ /* 제목 배지 */
+      display: inline-block; /* 인라인 블록 */
+      padding: 10px 36px; /* 내부 여백 */
+      background: #e1edff; /* 배경색 */
+      border-radius: 24px; /* 둥근 모서리 */
+    }
+
+    header h1{ /* 메인 제목 */
+      margin: 0; /* 외부 여백 제거 */
+      font-family: 'PyeongChangPeace',serif; /* 제목 폰트 */
+      font-weight: 700; /* 굵게 */
+      font-size: 44px; /* 크기 */
+      letter-spacing: 2px; /* 자간 */
+    }
+
+    header .subtitle{ /* 부제목 */
+      margin: 12px 0 0; /* 위쪽 여백 */
+      font-size: 15px; /* 크기 */
+      color: #666; /* 색상 */
+    }
+
+    main{ /* 메인 래퍼 */
+      max-width: 1100px; /* 최대 폭 */
+      margin: 26px auto 40px; /* 센터링 */
+      padding: 0 20px 40px; /* 패딩 */
+    }
+
+    .layout{ /* 2열 그리드 */
+      display: grid; /* 그리드 사용 */
+      grid-template-columns: minmax(0,1.1fr) minmax(0,1.1fr); /* 컬럼 비율 */
+      gap: 32px; /* 칸 간격 */
+      align-items: start; /* 상단 정렬 */
+    }
+
+    @media (max-width: 900px){ /* 모바일 대응 */
+      .layout{ grid-template-columns: 1fr; } /* 1열 전환 */
+    }
+
+    .map-card,.list-card{ /* 카드 공통 스타일 */
+      background: #fff; /* 배경 흰색 */
+      border-radius: 20px; /* 둥근 모서리 */
+      box-shadow: 0 6px 18px rgba(0,0,0,.06); /* 그림자 */
+    }
+
+    .map-card{ padding: 18px; overflow: hidden; } /* 지도 카드 */
+    .map-inner{ display: flex; flex-direction: column; height: 100%; } /* 내부 래퍼 */
+    .map-title{ font-weight: 700; font-size: 17px; margin-bottom: 10px; text-align: center; } /* 소제목 */
+
+    .map-stage{ /* SVG 무대 */
+      flex: 1; /* 가용 높이 채우기 */
+      min-height: 440px; /* 최소 높이 */
+      display: flex; /* 플렉스 */
+      align-items: center; /* 수직 중앙 */
+      justify-content: center; /* 수평 중앙 */
+    }
+
+    .map-stage svg{ /* SVG 크기 */
+      width: clamp(520px, 60vw, 760px); /* 반응형 폭 */
+      height: auto; /* 자동 높이 */
+      display: block; /* 블록화 */
+      margin: 0 auto; /* 중앙 정렬 */
+    }
+
+    /* 마포구 path 스타일 및 위치/배율 적용 */
+    #Mapo-gu{ /* 마포구 Path 선택자 */
+      fill: #c6fff4; /* 면색 */
+      stroke: #fff; /* 테두리색 */
+      stroke-width: 2; /* 선 두께 */
+      vector-effect: non-scaling-stroke; /* 확대해도 선두께 유지 */
+      transform-box: fill-box; /* 변환 기준 */
+      transform-origin: center; /* 변환 중심 */
+      transform: translate(var(--mp-x), var(--mp-y)) scale(var(--mp-scale)); /* 위치/배율 */
+      transition: transform .2s ease; /* 조정 부드럽게 */
+    }
+
+    .list-card{ padding: 18px 20px 22px; } /* 리스트 카드 패딩 */
+    .list-title{ font-weight: 700; font-size: 17px; margin-bottom: 6px; } /* 리스트 제목 */
+    .list-sub{ font-size: 13px; color: #777; margin-bottom: 14px; } /* 안내 문구 */
+
+    .restaurant-list{ /* 맛집 목록 래퍼 */
+      display: flex; /* 플렉스 컬럼 */
+      flex-direction: column; /* 세로 배치 */
+      gap: 12px; /* 아이템 간격 */
+      padding-right: 4px; /* 스크롤바 여유 */
+    }
+
+    .restaurant-card{ /* 개별 맛집 카드(링크) */
+      display: block; /* 블록 링크 */
+      border-radius: 14px; /* 둥근 모서리 */
+      padding: 12px 14px; /* 패딩 */
+      background: #f7f5ee; /* 배경 */
+      color: inherit; /* 글자색 상속 */
+      text-decoration: none; /* 밑줄 제거 */
+      transition: background .15s ease, transform .15s ease, box-shadow .15s ease; /* 호버 효과 */
+    }
+    .restaurant-card:hover{ /* 호버 시 */
+      background: #f2eddc; /* 배경 살짝 진하게 */
+      transform: translateY(-1px); /* 살짝 띄우기 */
+      box-shadow: 0 4px 10px rgba(0,0,0,.06); /* 그림자 */
+    }
+
+    .restaurant-name{ font-weight: 700; font-size: 15px; margin-bottom: 4px; } /* 가게명 */
+    .restaurant-desc{ font-size: 12px; color: #777; line-height: 1.45; word-break: keep-all; } /* 주소 */
+    .nv-badge{ /* 네이버 배지 */
+      display: inline-block; /* 인라인 블록 */
+      padding: 2px 8px; /* 패딩 */
+      border-radius: 10px; /* 둥근 */
+      background: #e1edff; /* 배경 */
+      border: 1px solid #cfe0ff; /* 테두리 */
+      font-size: 12px; /* 크기 */
+      margin-left: 6px; /* 좌측 여백 */
+    }
+
+    footer{ /* 푸터 */
+      text-align: center; /* 중앙 정렬 */
+      padding: 18px 10px 28px; /* 패딩 */
+      font-size: 14px; /* 글자 크기 */
+      color: #666; /* 색상 */
+      border-top: 1px solid #e3dccb; /* 상단 보더 */
+    }
+  </style> 
+</head>
+
+<body> <!-- 본문 시작 -->
+  <header> <!-- 상단 헤더 -->
+    <a class="back-link" href="./index.html" aria-label="서울 맛집 지도 홈으로">←</a> <!-- 뒤로가기 -->
+    <div class="title-badge"><h1>마포구</h1></div> <!-- 제목 배지+제목 -->
+    <p class="subtitle">서울 마포구 맛집 지도</p> <!-- 부제목 -->
+  </header>
+
+  <main> <!-- 메인 컨텐츠 -->
+    <section class="layout"> <!-- 2열 레이아웃 시작 -->
+
+      <div class="map-card" id="mapCard"> <!-- 좌: 지도 카드 -->
+        <div class="map-inner"> <!-- 내부 정렬 -->
+          <div class="map-title">마포구 지도</div> <!-- 지도 소제목 -->
+          <div class="map-stage"> <!-- SVG 스테이지 -->
+            <svg viewBox="0 0 1400 1400" preserveAspectRatio="xMidYMid meet" aria-hidden="true"> <!-- 반응형 SVG -->
+              <!-- ▼▼ 메인 인덱스에서 복사한 마포구 path (d 값 수정 금지 / 위치는 CSS 변수로만 조정) ▼▼ -->
+              <path id="Mapo-gu" d="M402.936,583.763  c6.628,6.041,6.576,18.764,20.004,18.004c5.968,13.406,17.593,19.237,29.007,28.007c7.357,5.653,15.368,10.769,22.005,16.504  c12.672,10.951,22.254,25.911,33.508,36.008c5.59,5.017,12.528,8.948,18.004,14.503c2.292,2.709,4.792,5.21,7.502,7.501  c0.501-0.001,0.595,0.405,1,0.501c2.458,2.875,5.126,5.543,8.002,8.001c2.292,2.71,4.792,5.21,7.501,7.502  c0.501-0.001,0.595,0.405,1,0.5c2.292,2.71,4.792,5.21,7.501,7.502c2.202,2.3,3.968,5.034,7.001,6.501  c13.151,1.679,33.148,3.431,48.011,5.002c5.674,0.6,11.949,2.383,16.003,1.5c6.439-1.402,9.308-9.631,16.004-10.502  c1.58,5.924,4.993,11.412,7.001,17.504c1.616,4.899,5.107,15.426,5.001,20.004c-0.106,4.607-4.983,19.26-6.502,23.006  c-5.032,12.414-13.34,21.697-21.005,31.007c-10.313,12.528-22.811,24.427-34.008,34.007c-2.909-2.459-5.033-5.625-8.001-8.001  c-3.006-2.405-6-4.657-9.002-7.002c-5.841-4.562-11.654-9.769-18.004-13.503c-19.939-11.727-41.419-19.489-63.014-27.506  c-10.111-3.754-20.545-9.33-31.007-14.504c-10.133-5.011-21.63-9.223-30.507-15.003c-6.704-4.366-13.309-11.702-20.004-17.505  c-17.035-14.76-33.581-28.587-50.011-43.51c-3.288-2.985-7.931-6.23-10.002-9.001c-3.899-5.214-4.916-12.548-8.002-18.004  c-2.809-4.965-7.841-10.148-12.002-15.003c-6.841-7.979-12.272-16.188-21.505-20.505c0-0.167,0-0.333,0-0.5  c8.283-2.733,16.484-15.161,25.005-17.004c9.141-1.977,18.662,0.807,29.507-1c3.474-3.274,7.478-7.106,11.502-11.503  c3.063-3.346,9.383-8.809,10.502-12.503c0.708-2.338-0.158-4.918,0.5-7.001C393.398,591.544,399.557,589.176,402.936,583.763z"/>
+              <!-- ▲▲ 마포구 path 끝 ▲▲ -->
+            </svg> <!-- SVG 끝 -->
+          </div> <!-- map-stage 끝 -->
+        </div> <!-- map-inner 끝 -->
+      </div> <!-- map-card 끝 -->
+
+      <div class="list-card" id="listCard"> <!-- 우: 맛집 리스트 카드 -->
+        <div class="list-title">마포구 맛집 리스트</div> <!-- 리스트 제목 -->
+        <div class="list-sub">항목을 클릭하면 네이버지도가 새 탭에서 열립니다.</div> <!-- 안내 -->
+
+        <div class="restaurant-list"> <!-- 맛집 목록 래퍼 -->
+
+          <!-- 1) 구황작물 -->
+          <a class="restaurant-card" href="https://naver.me/5jB9AKgR" target="_blank" rel="noopener"> <!-- 링크 카드 -->
+            <div class="restaurant-name">구황작물 <span class="nv-badge">네이버지도</span></div> <!-- 이름/배지 -->
+            <div class="restaurant-desc">서울 마포구 동교로 27-8 1층</div> <!-- 주소 -->
+          </a> <!-- 항목 끝 -->
+
+          <!-- 2) 브릭베이글 -->
+          <a class="restaurant-card" href="https://naver.me/xim3vffF" target="_blank" rel="noopener"> <!-- 링크 카드 -->
+            <div class="restaurant-name">브릭베이글 <span class="nv-badge">네이버지도</span></div> <!-- 이름/배지 -->
+            <div class="restaurant-desc">서울 마포구 동교로 43-1</div> <!-- 주소 -->
+          </a> <!-- 항목 끝 -->
+
+          <!-- 3) 해브어 -->
+          <a class="restaurant-card" href="https://naver.me/x0Xuaosm" target="_blank" rel="noopener"> <!-- 링크 카드 -->
+            <div class="restaurant-name">해브어 <span class="nv-badge">네이버지도</span></div> <!-- 이름/배지 -->
+            <div class="restaurant-desc">서울 마포구 월드컵로17길 38 2층</div> <!-- 주소 -->
+          </a> <!-- 항목 끝 -->
+
+        </div> <!-- restaurant-list 끝 -->
+      </div> <!-- list-card 끝 -->
+
+    </section> <!-- 레이아웃 섹션 끝 -->
+  </main> <!-- 메인 끝 -->
+
+  <footer>2025066644 | 최지민</footer> <!-- 푸터 -->
+
+  <script> /* ===== 좌/우 카드 높이 동기화 스크립트 ===== */
+    function syncLeftToRight(){ /* 좌측 지도카드를 우측 리스트 높이에 맞춤 */
+      const left = document.getElementById('mapCard'); /* 좌측 카드 참조 */
+      const right = document.getElementById('listCard'); /* 우측 카드 참조 */
+      if(!left || !right) return; /* 요소 없으면 중단 */
+
+      if (window.matchMedia('(max-width: 900px)').matches){ /* 모바일 폭일 때 */
+        left.style.height = ''; /* 자동 높이 */
+        return; /* 종료 */
+      }
+
+      right.style.height = 'auto'; /* 초기화 */
+      const h = right.scrollHeight; /* 실제 렌더 높이 측정 */
+      left.style.height = h + 'px'; /* 좌측 높이 동기화 */
+    }
+
+    window.addEventListener('load', syncLeftToRight); /* 로드시 동기화 */
+    window.addEventListener('resize', () => requestAnimationFrame(syncLeftToRight)); /* 리사이즈시 동기화 */
+    if (document.fonts && document.fonts.ready){ document.fonts.ready.then(syncLeftToRight); } /* 폰트 로딩 후 동기화 */
+  </script> <!-- 스크립트 끝 -->
+</body> <!-- 본문 끝 -->
+</html> <!-- 문서 끝 -->

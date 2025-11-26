@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <title>동대문구 맛집 지도</title>
+  <style>
+    @font-face{
+      font-family:'PyeongChangPeace';
+      src:url('./PyeongChangPeace-Bold.otf') format('opentype'),
+          url('../PyeongChangPeace-Bold.otf') format('opentype');
+      font-weight:700; font-style:normal; font-display:swap;
+    }
+
+    /* === 여기 숫자만 바꿔서 위치/크기 조정 === */
+    :root{
+      --ddm-x: -150%;   /* 왼(-) / 오른(+) 이동 */
+      --ddm-y:  -130%;   /* 위(+) / 아래(-) 이동 */
+      --ddm-scale: 2; /* 확대/축소 */
+    }
+
+    *{box-sizing:border-box}
+    body{
+      margin:0; padding:0; background:#fffdf5;
+      font-family:'Noto Sans KR','Malgun Gothic','Apple SD Gothic Neo',system-ui,sans-serif;
+      color:#333;
+    }
+
+    header{ position:relative; text-align:center; padding:22px 20px 8px; }
+    .back-link{
+      position:absolute; left:16px; top:14px; text-decoration:none; color:inherit;
+      -webkit-tap-highlight-color:transparent;
+    }
+    .back-link:visited,.back-link:hover,.back-link:active,.back-link:focus{
+      color:inherit; text-decoration:none; outline:none;
+    }
+    .title-badge{ display:inline-block; background:#e1edff; border-radius:24px; padding:10px 36px; }
+    header h1{ margin:0; font-family:'PyeongChangPeace',serif; font-weight:700; font-size:44px; letter-spacing:2px; }
+    header .subtitle{ margin:12px 0 0; font-size:15px; color:#666; }
+
+    main{ max-width:1100px; margin:26px auto 40px; padding:0 20px 40px; }
+    .layout{
+      display:grid;
+      grid-template-columns:minmax(0,1.1fr) minmax(0,1.1fr);
+      gap:32px;
+      align-items:start;
+    }
+    @media (max-width:900px){ .layout{ grid-template-columns:1fr; } }
+
+    .map-card,.list-card{ background:#fff; border-radius:20px; box-shadow:0 6px 18px rgba(0,0,0,.06); }
+
+    .map-card{ padding:18px; overflow:hidden; }
+    .map-inner{ display:flex; flex-direction:column; height:100%; }
+    .map-title{ font-weight:700; font-size:17px; margin-bottom:10px; text-align:center; }
+
+    .map-stage{
+      flex:1;
+      min-height:440px;
+      display:flex; align-items:center; justify-content:center;
+    }
+    .map-stage svg{ width:clamp(520px, 60vw, 760px); height:auto; display:block; margin:0 auto; }
+
+    /* 동대문구 패스 스타일 + 위치/스케일 변수 적용 */
+    #Dongdaemun-gu{
+      fill:#c094c7; stroke:#fff; stroke-width:2;
+      vector-effect:non-scaling-stroke;
+      transform-box:fill-box; transform-origin:center;
+      transform:translate(var(--ddm-x), var(--ddm-y)) scale(var(--ddm-scale));
+    }
+
+    .list-card{ padding:18px 20px 22px; height:auto; }
+    .list-title{ font-weight:700; font-size:17px; margin-bottom:6px; }
+    .list-sub{ font-size:13px; color:#777; margin-bottom:14px; }
+    .restaurant-list{ display:flex; flex-direction:column; gap:12px; padding-right:4px; }
+
+    .restaurant-card{
+      display:block; border-radius:14px; padding:12px 14px; background:#f7f5ee; color:inherit; text-decoration:none;
+      transition:background .15s ease, transform .15s ease, box-shadow .15s ease;
+    }
+    .restaurant-card:hover{ background:#f2eddc; transform:translateY(-1px); box-shadow:0 4px 10px rgba(0,0,0,.06); }
+    .restaurant-name{ font-weight:700; font-size:15px; margin-bottom:4px; }
+    .restaurant-desc{ font-size:12px; color:#777; line-height:1.45; word-break:keep-all; }
+    .nv-badge{ display:inline-block; padding:2px 8px; border-radius:10px; background:#e1edff; border:1px solid #cfe0ff; font-size:12px; margin-left:6px; }
+
+    footer{ text-align:center; padding:18px 10px 28px; font-size:14px; color:#666; border-top:1px solid #e3dccb; }
+  </style>
+</head>
+<body>
+  <header>
+    <a class="back-link" href="./index.html" aria-label="서울 맛집 지도">←</a>
+    <div class="title-badge"><h1>동대문구</h1></div>
+    <p class="subtitle">서울 동대문구 맛집 지도</p>
+  </header>
+
+  <main>
+    <section class="layout">
+      <div class="map-card" id="mapCard">
+        <div class="map-inner">
+          <div class="map-title">동대문구 지도</div>
+          <div></div><div></div>
+          <div class="map-stage">
+            <svg viewBox="0 0 1400 1400" preserveAspectRatio="xMidYMid meet" aria-hidden="true">
+              <!-- 여기 path d는 네가 준 메인 지도에서 복사해옴 -->
+              <path id="Dongdaemun-gu" d="M943.059,562.258  c17.314-12.86,45.85-14.498,69.016-21.505c4.727,50.787,10.273,100.752,15.504,151.034c-6.555,14.951-12.34,30.67-19.004,45.511  c-22.848-9.494-47.135-17.548-71.518-25.506c-1.996-7.838-4.219-15.451-7-22.505c-1.004-1.498-4.105-0.896-6.502-1  c-0.693-1.14-3.48-0.187-5.002-0.5c-4.93,0.306-9.943-0.296-15.002-0.5c-5.111-0.206-11.324-1.679-15.004-0.5  c-4.971,1.592-4.482,8.52-9.002,11.003c-1.5,0-3.002,0-4.502,0c-0.693-1.141-3.48-0.187-5-0.5  c-6.898-0.604-9.074-5.929-13.504-9.002c0-2,0-4.001,0-6.001c1.15-1.184,0.18-4.488,0.5-6.501c0-3.334,0-6.668,0-10.002  c-1.777-8.816,6.691-12.109,9.502-18.004c3.188-6.685,2.475-12.889,5.502-20.004c13.135-9.705,25.787-19.891,43.01-25.506  c5.984-9.353,9.824-20.849,17.004-29.006C935.932,569.802,939.6,566.134,943.059,562.258z"/>
+            </svg>
+          </div>
+        </div>
+      </div>
+
+      <div class="list-card" id="listCard">
+        <div class="list-title">동대문구 맛집 리스트</div>
+        <div class="list-sub">항목을 클릭하면 네이버지도가 새 탭에서 열립니다.</div>
+
+        <div class="restaurant-list">
+          <a class="restaurant-card" href="https://naver.me/FNIa2s0t" target="_blank" rel="noopener">
+            <div class="restaurant-name">한우천국 장안점 <span class="nv-badge">네이버지도</span></div>
+            <div class="restaurant-desc">서울 동대문구 장한로 96 1층</div>
+          </a>
+
+          <a class="restaurant-card" href="https://naver.me/x2c85AQq" target="_blank" rel="noopener">
+            <div class="restaurant-name">누스 <span class="nv-badge">네이버지도</span></div>
+            <div class="restaurant-desc">서울 동대문구 장한로28가길 41-1 1층</div>
+          </a>
+
+          <a class="restaurant-card" href="https://naver.me/IM4oxAcC" target="_blank" rel="noopener">
+            <div class="restaurant-name">도래집 <span class="nv-badge">네이버지도</span></div>
+            <div class="restaurant-desc">서울 동대문구 경희대로1가길 3 도래집</div>
+          </a>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer>2025066644 | 최지민</footer>
+
+  <script>
+    /* 좌/우 카드 동일 높이 유지 */
+    function syncLeftToRight(){
+      const left = document.getElementById('mapCard');
+      const right = document.getElementById('listCard');
+      if(!left || !right) return;
+      if (window.matchMedia('(max-width: 900px)').matches){
+        left.style.height = '';
+        return;
+      }
+      right.style.height = 'auto';
+      const h = right.scrollHeight;
+      left.style.height = h + 'px';
+    }
+    window.addEventListener('load', syncLeftToRight);
+    window.addEventListener('resize', () => requestAnimationFrame(syncLeftToRight));
+    document.fonts && document.fonts.ready && document.fonts.ready.then(syncLeftToRight);
+  </script>
+</body>
+</html>

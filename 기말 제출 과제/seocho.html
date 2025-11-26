@@ -1,0 +1,247 @@
+<!DOCTYPE html> <!-- 문서 타입 -->
+<html lang="ko"> <!-- 한국어 페이지 -->
+<head> <!-- 메타/스타일 시작 -->
+  <meta charset="UTF-8" /> <!-- 인코딩 -->
+  <title>서초구 맛집 지도</title> <!-- 탭 제목 -->
+
+  <style> /* ================== 스타일 시작 ================== */
+    @font-face { /* 제목 폰트 등록 */
+      font-family: 'PyeongChangPeace'; /* 폰트 이름 */
+      src: url('./PyeongChangPeace-Bold.otf') format('opentype'); /* 경로/포맷 */
+      font-weight: 700; /* 두께 */
+      font-style: normal; /* 스타일 */
+      font-display: swap; /* 표시 전략 */
+    }
+
+    :root{ 
+      /* ▼ 서초구 위치/배율 조정 변수 (필요하면 여기만 수정해서 위치 맞추기) ▼ */
+      --sc-x: -45%;       /* X축 이동 (음수=왼쪽, 양수=오른쪽) */
+      --sc-y: -160%;       /* Y축 이동 (음수=위,   양수=아래) */
+      --sc-scale: 1.6;   /* 확대/축소 배율 */
+    }
+
+    *{ box-sizing: border-box; } /* 박스 모델 통일 */
+
+    body{ /* 본문 기본 스타일 */
+      margin: 0; /* 기본 여백 제거 */
+      padding: 0; /* 기본 패딩 제거 */
+      background: #fffdf5; /* 배경색 */
+      color: #333; /* 글자색 */
+      font-family: 'Noto Sans KR','Malgun Gothic','Apple SD Gothic Neo',system-ui,sans-serif; /* 폰트 */
+    }
+
+    header{ /* 상단 헤더 */
+      position: relative; /* 뒤로가기 배치용 기준 */
+      text-align: center; /* 중앙 정렬 */
+      padding: 22px 20px 10px; /* 여백 */
+    }
+
+    .back-link{ /* 뒤로가기 링크 */
+      position: absolute; /* 절대 배치 */
+      left: 16px; /* 좌측 여백 */
+      top: 14px; /* 상단 여백 */
+      color: inherit; /* 부모 글자색 상속 */
+      text-decoration: none; /* 밑줄 제거 */
+      -webkit-tap-highlight-color: transparent; /* 모바일 탭 하이라이트 제거 */
+    }
+
+    .title-badge{ /* 제목 배지 */
+      display: inline-block; /* 인라인 블록 */
+      padding: 10px 36px; /* 내부 여백 */
+      background: #e1edff; /* 배경색 */
+      border-radius: 24px; /* 둥근 모서리 */
+    }
+
+    header h1{ /* 메인 제목 */
+      margin: 0; /* 외부 여백 제거 */
+      font-family: 'PyeongChangPeace',serif; /* 제목 폰트 */
+      font-weight: 700; /* 굵게 */
+      font-size: 44px; /* 크기 */
+      letter-spacing: 2px; /* 자간 */
+    }
+
+    header .subtitle{ /* 부제목 */
+      margin: 12px 0 0; /* 위쪽 여백 */
+      font-size: 15px; /* 크기 */
+      color: #666; /* 색상 */
+    }
+
+    main{ /* 메인 래퍼 */
+      max-width: 1100px; /* 최대 폭 */
+      margin: 26px auto 40px; /* 센터링 */
+      padding: 0 20px 40px; /* 패딩 */
+    }
+
+    .layout{ /* 2열 그리드 */
+      display: grid; /* 그리드 사용 */
+      grid-template-columns: minmax(0,1.1fr) minmax(0,1.1fr); /* 컬럼 비율 */
+      gap: 32px; /* 칸 간격 */
+      align-items: start; /* 상단 정렬 */
+    }
+
+    @media (max-width: 900px){ /* 모바일 대응 */
+      .layout{ grid-template-columns: 1fr; } /* 1열 전환 */
+    }
+
+    .map-card,.list-card{ /* 카드 공통 스타일 */
+      background: #fff; /* 배경 흰색 */
+      border-radius: 20px; /* 둥근 모서리 */
+      box-shadow: 0 6px 18px rgba(0,0,0,.06); /* 그림자 */
+    }
+
+    .map-card{ padding: 18px; overflow: hidden; } /* 지도 카드 */
+    .map-inner{ display: flex; flex-direction: column; height: 100%; } /* 내부 래퍼 */
+    .map-title{ font-weight: 700; font-size: 17px; margin-bottom: 10px; text-align: center; } /* 소제목 */
+
+    .map-stage{ /* SVG 무대 */
+      flex: 1; /* 가용 높이 채우기 */
+      min-height: 440px; /* 최소 높이 */
+      display: flex; /* 플렉스 */
+      align-items: center; /* 수직 중앙 */
+      justify-content: center; /* 수평 중앙 */
+    }
+
+    .map-stage svg{ /* SVG 크기 */
+      width: clamp(520px, 60vw, 760px); /* 반응형 폭 */
+      height: auto; /* 자동 높이 */
+      display: block; /* 블록화 */
+      margin: 0 auto; /* 중앙 정렬 */
+    }
+
+    /* 서초구 path 스타일 및 위치/배율 적용 */
+    #Seocho-gu{ /* 서초구 Path 선택자 */
+      fill: #c6fff4; /* 면색 */
+      stroke: #fff; /* 테두리색 */
+      stroke-width: 2; /* 선 두께 */
+      vector-effect: non-scaling-stroke; /* 확대해도 선두께 유지 */
+      transform-box: fill-box; /* 변환 기준 */
+      transform-origin: center; /* 변환 중심 */
+      transform: translate(var(--sc-x), var(--sc-y)) scale(var(--sc-scale)); /* 위치/배율 */
+      transition: transform .2s ease; /* 조정 부드럽게 */
+    }
+
+    .list-card{ padding: 18px 20px 22px; } /* 리스트 카드 패딩 */
+    .list-title{ font-weight: 700; font-size: 17px; margin-bottom: 6px; } /* 리스트 제목 */
+    .list-sub{ font-size: 13px; color: #777; margin-bottom: 14px; } /* 안내 문구 */
+
+    .restaurant-list{ /* 맛집 목록 래퍼 */
+      display: flex; /* 플렉스 컬럼 */
+      flex-direction: column; /* 세로 배치 */
+      gap: 12px; /* 아이템 간격 */
+      padding-right: 4px; /* 스크롤바 여유 */
+    }
+
+    .restaurant-card{ /* 개별 맛집 카드(링크) */
+      display: block; /* 블록 링크 */
+      border-radius: 14px; /* 둥근 모서리 */
+      padding: 12px 14px; /* 패딩 */
+      background: #f7f5ee; /* 배경 */
+      color: inherit; /* 글자색 상속 */
+      text-decoration: none; /* 밑줄 제거 */
+      transition: background .15s ease, transform .15s ease, box-shadow .15s ease; /* 호버 효과 */
+    }
+    .restaurant-card:hover{ /* 호버 시 */
+      background: #f2eddc; /* 배경 살짝 진하게 */
+      transform: translateY(-1px); /* 살짝 띄우기 */
+      box-shadow: 0 4px 10px rgba(0,0,0,.06); /* 그림자 */
+    }
+
+    .restaurant-name{ font-weight: 700; font-size: 15px; margin-bottom: 4px; } /* 가게명 */
+    .restaurant-desc{ font-size: 12px; color: #777; line-height: 1.45; word-break: keep-all; } /* 주소 */
+    .nv-badge{ /* 네이버 배지 */
+      display: inline-block; /* 인라인 블록 */
+      padding: 2px 8px; /* 패딩 */
+      border-radius: 10px; /* 둥근 */
+      background: #e1edff; /* 배경 */
+      border: 1px solid #cfe0ff; /* 테두리 */
+      font-size: 12px; /* 크기 */
+      margin-left: 6px; /* 좌측 여백 */
+    }
+
+    footer{ /* 푸터 */
+      text-align: center; /* 중앙 정렬 */
+      padding: 18px 10px 28px; /* 패딩 */
+      font-size: 14px; /* 글자 크기 */
+      color: #666; /* 색상 */
+      border-top: 1px solid #e3dccb; /* 상단 보더 */
+    }
+  </style> 
+</head>
+
+<body> <!-- 본문 시작 -->
+  <header> <!-- 상단 헤더 -->
+    <a class="back-link" href="./index.html" aria-label="서울 맛집 지도 홈으로">←</a> <!-- 뒤로가기 -->
+    <div class="title-badge"><h1>서초구</h1></div> <!-- 제목 배지+제목 -->
+    <p class="subtitle">서울 서초구 맛집 지도</p> <!-- 부제목 -->
+  </header>
+
+  <main> <!-- 메인 컨텐츠 -->
+    <section class="layout"> <!-- 2열 레이아웃 시작 -->
+
+      <div class="map-card" id="mapCard"> <!-- 좌: 지도 카드 -->
+        <div class="map-inner"> <!-- 내부 정렬 -->
+          <div class="map-title">서초구 지도</div> <!-- 지도 소제목 -->
+          <div class="map-stage"> <!-- SVG 스테이지 -->
+            <svg viewBox="0 0 1400 1400" preserveAspectRatio="xMidYMid meet" aria-hidden="true"> <!-- 반응형 SVG -->
+              <!-- ▼▼ 메인 인덱스에서 복사한 서초구 path (d 값 수정 금지 / 위치는 CSS 변수로만 조정) ▼▼ -->
+              <path id="Seocho-gu" d="M806.527,888.332  c4.836,12.346,15.342,23.65,19.506,37.509c1.785,5.944,2.385,13.452,3.5,20.005c1.16,6.825,0.615,14.923,3,20.504  c2.943,6.886,13.414,11.089,15.504,17.504c2.102,6.455,0.887,15.961,1.5,24.006c1.275,16.718,2.035,32.602,11.004,41.01  c2.125,2.543,4.457,4.877,7,7.001c2.293,2.71,4.793,5.21,7.502,7.502c5.152,4.351,13.154,5.851,19.004,9.502  c4.793,5.21,9.795,10.211,15.004,15.003c6.199,24.977,8.586,53.764,22.506,71.018c12.578-3.768,27.584-9.42,44.51-10.503  c2.496-3.239,4.85-6.384,7.502-10.503c2.125-3.299,3.473-8.528,7.002-11.002c7.916-5.549,30.465-10.368,42.51-5.502  c3.742,1.513,5.676,5.699,9.002,7.002c1.172,0.827,1.082,2.918,1,5.002c0.313,1.52-0.641,4.307,0.5,5c0,2.168,0,4.335,0,6.502  c0.324,2.51-0.656,6.323,0.5,8.002c0,0.666,0,1.334,0,2c3.568,5.435,8.084,9.92,11.502,15.504  c10.914,5.424,19.607,13.066,26.006,23.006c-5.477,3.372-17.676,2.81-21.004,8.001c-2.535,3.952,0.248,8.76-0.5,14.003  c-0.789,5.527-5.758,10.554-5.502,15.504c-6.285,1.717-15.844,0.159-19.504,4.501c-2.889,8.221-3.168,16.153-10.502,20.005  c-4.592,2.41-14.232,3.557-20.506,5.001c-5.934,1.366-17.129,2.228-20.004,5.501c-3.428,3.902-2.934,13.344-4,19.004  c-1.336,7.069-2.83,12.834-4.502,18.505c-6.668,0-13.336,0-20.004,0c-8.256-0.581-14.83-2.841-23.006-3.501  c-9.994-6.312-21.668-14.544-32.508-21.505c-3.898-2.504-12.398-4.849-11.002-10.503c0.832-1.848,0.832-7.153,0-9.002  c-2.578-16.594-7.609-30.731-11.502-46.01c0-1.834,0-3.668,0-5.502c0-1.666,0-3.334,0-5c0-5.836,0-11.67,0-17.504  c1.156-1.845,0.174-5.828,0.5-8.502c-0.33-3.672,0.66-8.664-0.5-11.504c0.693-8.93-8.209-7.638-15.004-9.002  c-6.039-1.211-10.387-3.737-15.504-3c-4.658,0.671-11.443,6.838-16.504,10.002c-5.42,3.389-12.389,6.385-16.504,10.002  c-7.127,6.268-11.402,16.109-17.004,20.506c-4.719,0.825-12.785,0.825-17.504,0c-5.65-5.113-1.145-14.549-2.5-22.006  c-0.734-4.045-7.217-10.967-10.002-12.002c-2.207-0.821-8.766-1.677-13.004,0c-4.18,1.652-4.135,6.661-8.002,9.502  c-12.281-15.393-19.408-35.938-29.006-54.013c-0.332-6.669,0.664-14.668-0.5-20.505c-4.701-15.217-4.1-29.432-1.5-47.511  c1.387-9.655,2.531-19.489,4.5-27.006c1.068-4.075,4.164-8.104,4.002-12.003c-0.203-4.844-4.217-9.573-6.002-13.503  c-2.219-4.882-3.709-9.038-6.002-13.503c-7.08-1.088-14.927-1.41-23.005-1.5c-1.562-5.441-2.924-11.08-4.001-17.004  c19.89-0.508,35.938,1.268,50.012-4.502c6.559-2.688,13.355-10.818,19.004-16.004C772.443,924.47,790.729,906.379,806.527,888.332z"/>
+              <!-- ▲▲ 서초구 path 끝 ▲▲ -->
+            </svg> <!-- SVG 끝 -->
+          </div> <!-- map-stage 끝 -->
+        </div> <!-- map-inner 끝 -->
+      </div> <!-- map-card 끝 -->
+
+      <div class="list-card" id="listCard"> <!-- 우: 맛집 리스트 카드 -->
+        <div class="list-title">서초구 맛집 리스트</div> <!-- 리스트 제목 -->
+        <div class="list-sub">항목을 클릭하면 네이버지도가 새 탭에서 열립니다.</div> <!-- 안내 -->
+
+        <div class="restaurant-list"> <!-- 맛집 목록 래퍼 -->
+
+          <!-- 1) 현우동 -->
+          <a class="restaurant-card" href="https://naver.me/FK0AKVjk" target="_blank" rel="noopener">
+            <div class="restaurant-name">카페 이로 <span class="nv-badge">네이버지도</span></div>
+            <div class="restaurant-desc">서울 서초구 반포대로30길 32 1층, 지하1층</div>
+          </a>
+
+          <!-- 2) 껠끄쇼즈 -->
+          <a class="restaurant-card" href="https://naver.me/FAPYrnVu" target="_blank" rel="noopener">
+            <div class="restaurant-name">미국식 방배본점<span class="nv-badge">네이버지도</span></div>
+            <div class="restaurant-desc">서울 서초구 서초대로29길 17-2 1층</div>
+          </a>
+
+          <!-- 3) 도쿄수플레 -->
+          <a class="restaurant-card" href="https://naver.me/xt4aWuJg" target="_blank" rel="noopener">
+            <div class="restaurant-name">강남모밀무이 <span class="nv-badge">네이버지도</span></div>
+            <div class="restaurant-desc">서울 서초구 사평대로57길 44 강남모밀무이 신논현본점</div>
+          </a>
+
+        </div> <!-- restaurant-list 끝 -->
+      </div> <!-- list-card 끝 -->
+
+    </section> <!-- 레이아웃 섹션 끝 -->
+  </main> <!-- 메인 끝 -->
+
+  <footer>2025066644 | 최지민</footer> <!-- 푸터 -->
+
+  <script> /* ===== 좌/우 카드 높이 동기화 스크립트 ===== */
+    function syncLeftToRight(){ /* 좌측 지도카드를 우측 리스트 높이에 맞춤 */
+      const left = document.getElementById('mapCard'); /* 좌측 카드 참조 */
+      const right = document.getElementById('listCard'); /* 우측 카드 참조 */
+      if(!left || !right) return; /* 요소 없으면 중단 */
+
+      if (window.matchMedia('(max-width: 900px)').matches){ /* 모바일 폭일 때 */
+        left.style.height = ''; /* 자동 높이 */
+        return; /* 종료 */
+      }
+
+      right.style.height = 'auto'; /* 초기화 */
+      const h = right.scrollHeight; /* 실제 렌더 높이 측정 */
+      left.style.height = h + 'px'; /* 좌측 높이 동기화 */
+    }
+
+    window.addEventListener('load', syncLeftToRight); /* 로드시 동기화 */
+    window.addEventListener('resize', () => requestAnimationFrame(syncLeftToRight)); /* 리사이즈시 동기화 */
+    if (document.fonts && document.fonts.ready){ document.fonts.ready.then(syncLeftToRight); } /* 폰트 로딩 후 동기화 */
+  </script> <!-- 스크립트 끝 -->
+</body> <!-- 본문 끝 -->
+</html> <!-- 문서 끝 -->
