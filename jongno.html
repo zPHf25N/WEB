@@ -1,0 +1,233 @@
+<!DOCTYPE html> <!-- 문서 타입 선언 -->
+<html lang="ko"> <!-- 한국어 페이지 -->
+<head> <!-- 메타/스타일 -->
+  <meta charset="UTF-8" /> <!-- 문자 인코딩 -->
+  <title>종로구 맛집 지도</title> <!-- 브라우저 탭 제목 -->
+
+  <style> /* ================== 스타일 시작 ================== */
+    @font-face { /* 제목 폰트 등록 */
+      font-family: 'PyeongChangPeace';
+      src: url('./PyeongChangPeace-Bold.otf') format('opentype');
+      font-weight: 700;
+      font-style: normal;
+      font-display: swap;
+    }
+
+    :root{ /* ▼ 종로구 위치/배율 조정 변수 (여기만 조정하면 배치 끝) ▼ */
+      --jn-x: -5%;      /* X축 이동 (음수=왼, 양수=오) */
+      --jn-y: -47%;      /* Y축 이동 (음수=위, 양수=아래) */
+      --jn-scale: 2;/* 확대/축소 배율 */
+    }
+
+    *{ box-sizing: border-box; } /* 박스 모델 통일 */
+
+    body{ /* 본문 기본 */
+      margin: 0;
+      padding: 0;
+      background: #fffdf5;
+      color: #333;
+      font-family: 'Noto Sans KR','Malgun Gothic','Apple SD Gothic Neo',system-ui,sans-serif;
+    }
+
+    header{ /* 상단 헤더 */
+      position: relative;
+      text-align: center;
+      padding: 22px 20px 10px;
+    }
+
+    .back-link{ /* 뒤로가기 링크 */
+      position: absolute;
+      left: 16px;
+      top: 14px;
+      color: inherit;
+      text-decoration: none;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .title-badge{ /* 제목 배지 */
+      display: inline-block;
+      padding: 10px 36px;
+      background: #e1edff;
+      border-radius: 24px;
+    }
+
+    header h1{ /* 큰 제목 */
+      margin: 0;
+      font-family: 'PyeongChangPeace',serif;
+      font-weight: 700;
+      font-size: 44px;
+      letter-spacing: 2px;
+    }
+
+    header .subtitle{ /* 부제목 */
+      margin: 12px 0 0;
+      font-size: 15px;
+      color: #666;
+    }
+
+    main{ /* 메인 컨테이너 */
+      max-width: 1100px;
+      margin: 26px auto 40px;
+      padding: 0 20px 40px;
+    }
+
+    .layout{ /* 2열 그리드 */
+      display: grid;
+      grid-template-columns: minmax(0,1.1fr) minmax(0,1.1fr);
+      gap: 32px;
+      align-items: start;
+    }
+
+    @media (max-width: 900px){ /* 모바일 1열 */
+      .layout{ grid-template-columns: 1fr; }
+    }
+
+    .map-card,.list-card{ /* 카드 공통 */
+      background: #fff;
+      border-radius: 20px;
+      box-shadow: 0 6px 18px rgba(0,0,0,.06);
+    }
+
+    .map-card{ padding: 18px; overflow: hidden; } /* 지도 카드 */
+    .map-inner{ display: flex; flex-direction: column; height: 100%; } /* 내부 래퍼 */
+    .map-title{ font-weight: 700; font-size: 17px; margin-bottom: 10px; text-align: center; } /* 소제목 */
+
+    .map-stage{ /* SVG 무대 */
+      flex: 1;
+      min-height: 440px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .map-stage svg{ /* SVG 반응형 크기 */
+      width: clamp(520px, 60vw, 760px);
+      height: auto;
+      display: block;
+      margin: 0 auto;
+    }
+
+    /* 종로구 path 스타일 + 위치/배율 적용 */
+    #Jongno-gu{
+      fill: #e1e1e1;                  /* 면색 */
+      stroke: #fff;                   /* 테두리 */
+      stroke-width: 2;                /* 선 두께 */
+      vector-effect: non-scaling-stroke; /* 확대해도 선두께 고정 */
+      transform-box: fill-box;        /* 변환 기준을 path 박스로 */
+      transform-origin: center;       /* 변환 중심 */
+      transform: translate(var(--jn-x), var(--jn-y)) scale(var(--jn-scale)); /* 위치/배율 */
+      transition: transform .2s ease; /* 조정시 부드럽게 */
+    }
+
+    .list-card{ padding: 18px 20px 22px; } /* 리스트 카드 영역 */
+    .list-title{ font-weight: 700; font-size: 17px; margin-bottom: 6px; } /* 리스트 제목 */
+    .list-sub{ font-size: 13px; color: #777; margin-bottom: 14px; } /* 안내 문구 */
+
+    .restaurant-list{ /* 맛집 목록 래퍼 */
+      display: flex; flex-direction: column; gap: 12px; padding-right: 4px;
+    }
+
+    .restaurant-card{ /* 개별 맛집 카드 */
+      display: block;
+      border-radius: 14px;
+      padding: 12px 14px;
+      background: #f7f5ee;
+      color: inherit;
+      text-decoration: none;
+      transition: background .15s ease, transform .15s ease, box-shadow .15s ease;
+    }
+    .restaurant-card:hover{
+      background: #f2eddc;
+      transform: translateY(-1px);
+      box-shadow: 0 4px 10px rgba(0,0,0,.06);
+    }
+
+    .restaurant-name{ font-weight: 700; font-size: 15px; margin-bottom: 4px; } /* 가게명 */
+    .restaurant-desc{ font-size: 12px; color: #777; line-height: 1.45; word-break: keep-all; } /* 주소 */
+    .nv-badge{ /* 네이버 배지 */
+      display: inline-block; padding: 2px 8px; border-radius: 10px;
+      background: #e1edff; border: 1px solid #cfe0ff; font-size: 12px; margin-left: 6px;
+    }
+
+    footer{ /* 푸터 */
+      text-align: center; padding: 18px 10px 28px; font-size: 14px;
+      color: #666; border-top: 1px solid #e3dccb;
+    }
+  </style> 
+</head>
+
+<body> <!-- 본문 시작 -->
+  <header> <!-- 상단 영역 -->
+    <a class="back-link" href="./index.html" aria-label="서울 맛집 지도 홈으로">←</a> <!-- 뒤로가기 -->
+    <div class="title-badge"><h1>종로구</h1></div> <!-- 제목 -->
+    <p class="subtitle">서울 종로구 맛집 지도</p> <!-- 부제 -->
+  </header>
+
+  <main>
+    <section class="layout"> <!-- 2열 레이아웃 -->
+
+      <div class="map-card" id="mapCard"> <!-- 좌: 지도 카드 -->
+        <div class="map-inner">
+          <div class="map-title">종로구 지도</div> <!-- 소제목 -->
+          <div class="map-stage"> <!-- SVG 영역 -->
+            <svg viewBox="0 0 1400 1400" preserveAspectRatio="xMidYMid meet" aria-hidden="true">
+              <!-- ▼▼ 메인 인덱스에서 복사한 종로구 path (수정 금지, 위치/배율은 CSS 변수로만 조정) ▼▼ -->
+              <path id="Jongno-gu" d="M720.008,682.285  c-13.643,8.694-29.509,15.167-47.511,19.505c-6.417-5.753-13.255-11.084-19.004-17.504c-1.625-2.043-3.458-3.876-5.501-5.501  c-4.496-4.668-9.113-12.79-9.002-20.004c0.059-3.846,2.49-9.455,4.001-14.504c3.006-10.049,6.144-18.898,9.002-28.506  c1.488-5.001,3.81-10.584,4.001-15.003c0.284-6.57-2.044-13.576-3.501-19.504c-1.444-5.877-3.262-11.502-5.001-18.004  c-5.435-2.734-11.846-4.491-16.504-8.002c0-0.667,0-1.333,0-2c1.153-1.348,0.177-4.823,0.5-7.001c0-3.667,0-7.335,0-11.002  c0-3.334,0-6.668,0-10.002c1.152-1.348,0.177-4.824,0.5-7.001c0-3.668,0-7.335,0-11.003c0-3.334,0-6.668,0-10.002  c1.152-1.348,0.177-4.824,0.5-7.002c0-3.667,0-7.335,0-11.002c0.908-12.657,0.718-22.671,4.501-31.007  c3.217-7.087,11.845-11.738,16.504-18.504c3.345-4.858,4.499-9.644,8.002-14.503c12.175-1.161,22.316-4.356,34.508-5.501  c4.252,4.75,9.984,8.02,15.503,11.502c6.941,16.762,8.516,34.323,13.504,52.012c5.047,17.906,16.736,33.542,17.004,55.512  c-2.867,5.802-5.285,12.053-8.002,18.004c-5.268,1.902-10.518,3.819-15.504,6.001c-0.797,6.729-2.854,14.783-2,21.505  c9.846,8.849,27.449,6.847,42.51,11.002c7.674,2.118,13.383,6.375,20.004,8.002c11.162,22.178,19.406,47.276,35.008,65.015  c13.176,0.995,26.723,1.617,39.51,3c0,1.167,0,2.334,0,3.501c-1.16,2.341-0.172,6.829-0.5,10.002c0,4.334,0,8.668,0,13.003  c-4.334,0-8.67,0-13.004,0c-1.848,0.319-4.982-0.648-6.002,0.5c-3.166,0-6.334,0-9.502,0c-1.848,0.319-4.98-0.647-6,0.5  c-3.002,0-6.002,0-9.002,0c-2.014,0.321-5.318-0.65-6.502,0.5c-12.729,0.941-23.139,4.201-35.508,5.501c-8.336,0-16.672,0-25.006,0  c-4.959-3.876-8.289-9.382-14.004-12.503C726.826,681.454,721.691,681.454,720.008,682.285z"/>
+              <!-- ▲▲ 종로구 path 끝 ▲▲ -->
+            </svg>
+          </div>
+        </div>
+      </div>
+
+      <div class="list-card" id="listCard"> <!-- 우: 맛집 리스트 카드 -->
+        <div class="list-title">종로구 맛집 리스트</div>
+        <div class="list-sub">항목을 클릭하면 네이버지도가 새 탭에서 열립니다.</div>
+
+        <div class="restaurant-list">
+          <!-- 1) 통인스윗 -->
+          <a class="restaurant-card" href="https://naver.me/xfYLaz7j" target="_blank" rel="noopener">
+            <div class="restaurant-name">통인스윗 <span class="nv-badge">네이버지도</span></div>
+            <div class="restaurant-desc">서울 종로구 자하문로7길 50</div>
+          </a>
+
+          <!-- 2) 도라보울 -->
+          <a class="restaurant-card" href="https://naver.me/57QBMLHr" target="_blank" rel="noopener">
+            <div class="restaurant-name">도라보울 <span class="nv-badge">네이버지도</span></div>
+            <div class="restaurant-desc">서울 종로구 북촌로5길 54</div>
+          </a>
+
+          <!-- 3) 도담 1988 -->
+          <a class="restaurant-card" href="https://naver.me/5jB9AVix" target="_blank" rel="noopener">
+            <div class="restaurant-name">도담 1988 <span class="nv-badge">네이버지도</span></div>
+            <div class="restaurant-desc">서울 종로구 인사동10길 11-5 1층</div>
+          </a>
+        </div>
+      </div>
+
+    </section>
+  </main>
+
+  <footer>2025066644 | 최지민</footer> <!-- 푸터 -->
+
+  <script> /* ===== 좌/우 카드 높이 동기화 ===== */
+    function syncLeftToRight(){                 /* 좌측 지도카드를 우측 리스트 높이에 맞춤 */
+      const left = document.getElementById('mapCard');
+      const right = document.getElementById('listCard');
+      if(!left || !right) return;
+
+      if (window.matchMedia('(max-width: 900px)').matches){ /* 모바일 폭이면 자동 높이 */
+        left.style.height = '';
+        return;
+      }
+
+      right.style.height = 'auto';              /* 초기화 */
+      const h = right.scrollHeight;             /* 실제 렌더 높이 */
+      left.style.height = h + 'px';             /* 좌측 높이 동기화 */
+    }
+
+    window.addEventListener('load', syncLeftToRight);                        /* 로드시 */
+    window.addEventListener('resize', () => requestAnimationFrame(syncLeftToRight)); /* 리사이즈시 */
+    if (document.fonts && document.fonts.ready){ document.fonts.ready.then(syncLeftToRight); } /* 폰트 로딩 후 */
+  </script>
+</body>
+</html>

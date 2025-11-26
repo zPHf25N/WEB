@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" /> <!-- 문서 인코딩 설정 -->
+  <title>동작구 맛집 지도</title> <!-- 브라우저 탭 제목 -->
+
+  <style>
+    @font-face{ /* 제목용 폰트 선언 */
+      font-family:'PyeongChangPeace';
+      src:url('./PyeongChangPeace-Bold.otf') format('opentype'),
+          url('../PyeongChangPeace-Bold.otf') format('opentype');
+      font-weight:700; font-style:normal; font-display:swap;
+    }
+
+    /* ====== 여기 세 변수로 지도의 위치/크기만 조정 ====== */
+    :root{
+      --dj-x:29%;     /* 왼(-) / 오른(+) 이동 */
+      --dj-y: -310%;     /* 위(+) / 아래(-) 이동 */
+      --dj-scale: 2.90;/* 확대/축소 값 */
+    }
+
+    *{ box-sizing:border-box; } /* 패딩/보더 포함한 박스 모델 */
+    body{ /* 기본 바디 스타일 */
+      margin:0; padding:0; background:#fffdf5;
+      font-family:'Noto Sans KR','Malgun Gothic','Apple SD Gothic Neo',system-ui,sans-serif;
+      color:#333;
+    }
+
+    header{ /* 상단 영역 */
+      position:relative; text-align:center; padding:22px 20px 8px;
+    }
+    .back-link{ /* 뒤로가기 링크 (메인 지도) */
+      position:absolute; left:16px; top:14px; text-decoration:none; color:inherit;
+      -webkit-tap-highlight-color:transparent;
+    }
+    .back-link:visited,.back-link:hover,.back-link:active,.back-link:focus{
+      color:inherit; text-decoration:none; outline:none; /* 상태에 관계없이 동일 색상 */
+    }
+    .title-badge{ /* 제목 배지 배경 */
+      display:inline-block; background:#e1edff; border-radius:24px; padding:10px 36px;
+    }
+    header h1{ /* 큰 제목 */
+      margin:0; font-family:'PyeongChangPeace',serif; font-weight:700; font-size:44px; letter-spacing:2px;
+    }
+    header .subtitle{ /* 부제목 */
+      margin:12px 0 0; font-size:15px; color:#666;
+    }
+
+    main{ /* 본문 컨테이너 */
+      max-width:1100px; margin:26px auto 40px; padding:0 20px 40px;
+    }
+    .layout{ /* 좌/우 2열 그리드 */
+      display:grid;
+      grid-template-columns:minmax(0,1.1fr) minmax(0,1.1fr);
+      gap:32px; align-items:start;
+    }
+    @media (max-width:900px){ .layout{ grid-template-columns:1fr; } } /* 모바일 1열 */
+
+    .map-card,.list-card{ /* 카드 공통 */
+      background:#fff; border-radius:20px; box-shadow:0 6px 18px rgba(0,0,0,.06);
+    }
+
+    .map-card{ /* 지도 카드 */
+      padding:18px; overflow:hidden;
+    }
+    .map-inner{ /* 지도 카드 내부 레이아웃 */
+      display:flex; flex-direction:column; height:100%;
+    }
+    .map-title{ /* 지도 제목 */
+      font-weight:700; font-size:17px; margin-bottom:10px; text-align:center;
+    }
+
+    .map-stage{ /* SVG 배치 영역 */
+      flex:1; min-height:440px; display:flex; align-items:center; justify-content:center;
+    }
+    .map-stage svg{ /* SVG 크기 반응형 */
+      width:clamp(520px, 60vw, 760px); height:auto; display:block; margin:0 auto;
+    }
+
+    /* 동작구 패스 자체 스타일 (색/스트로크/변환) */
+    #Dongjak-gu{
+      fill:#dfb395; /* 영역 색상 */
+      stroke:#fff; stroke-width:2; /* 테두리 */
+      vector-effect:non-scaling-stroke; /* 확대해도 선 굵기 유지 */
+      transform-box:fill-box; transform-origin:center; /* 변환 기준 */
+      transform:translate(var(--dj-x), var(--dj-y)) scale(var(--dj-scale)); /* 위치/크기 변수 적용 */
+    }
+
+    .list-card{ /* 맛집 리스트 카드 */
+      padding:18px 20px 22px; height:auto;
+    }
+    .list-title{ /* 리스트 제목 */
+      font-weight:700; font-size:17px; margin-bottom:6px;
+    }
+    .list-sub{ /* 리스트 설명 */
+      font-size:13px; color:#777; margin-bottom:14px;
+    }
+    .restaurant-list{ /* 레스토랑 아이템 컨테이너 */
+      display:flex; flex-direction:column; gap:12px; padding-right:4px;
+    }
+
+    .restaurant-card{ /* 개별 맛집 카드 링크 */
+      display:block; border-radius:14px; padding:12px 14px; background:#f7f5ee; color:inherit; text-decoration:none;
+      transition:background .15s ease, transform .15s ease, box-shadow .15s ease;
+    }
+    .restaurant-card:hover{ /* 호버 효과 */
+      background:#f2eddc; transform:translateY(-1px); box-shadow:0 4px 10px rgba(0,0,0,.06);
+    }
+    .restaurant-name{ /* 가게명 */
+      font-weight:700; font-size:15px; margin-bottom:4px;
+    }
+    .restaurant-desc{ /* 주소/설명 */
+      font-size:12px; color:#777; line-height:1.45; word-break:keep-all;
+    }
+    .nv-badge{ /* 네이버지도 배지 표시 */
+      display:inline-block; padding:2px 8px; border-radius:10px; background:#e1edff; border:1px solid #cfe0ff; font-size:12px; margin-left:6px;
+    }
+
+    footer{ /* 하단 푸터 */
+      text-align:center; padding:18px 10px 28px; font-size:14px; color:#666; border-top:1px solid #e3dccb;
+    }
+  </style>
+</head>
+<body>
+  <header> <!-- 상단 타이틀 영역 -->
+    <a class="back-link" href="./index.html" aria-label="서울 맛집 지도">←</a> <!-- 메인 페이지로 이동 -->
+    <div class="title-badge"><h1>동작구</h1></div> <!-- 큰 제목 -->
+    <p class="subtitle">서울 동작구 맛집 지도</p> <!-- 부제목 -->
+  </header>
+
+  <main> <!-- 본문 시작 -->
+    <section class="layout"> <!-- 좌/우 2열 레이아웃 -->
+      <div class="map-card" id="mapCard"> <!-- 왼쪽: 지도 카드 -->
+        <div class="map-inner"> <!-- 카드 내부 레이아웃 -->
+          <div class="map-title">동작구 지도</div> <!-- 지도 제목 -->
+          <div></div><div></div> <!-- 여백용 더미 -->
+          <div class="map-stage"> <!-- SVG 표시 영역 -->
+            <svg viewBox="0 0 1400 1400" preserveAspectRatio="xMidYMid meet" aria-hidden="true"> <!-- 서울 전체 좌표계 -->
+              <!-- 동작구 path: 네가 준 메인 SVG에서 그대로 복사 -->
+              <path id="Dongjak-gu" d="M549.469,914.338  c12.88,1.814,26.066,2.353,40.509,1.5c5.67-0.331,12.667,0.665,17.504-0.5c1.864,0.031,3.163-0.504,4.501-1  c6.505,6.898,12.973,14.271,19.505,22.006c6.095,7.215,12.891,16.18,21.505,20.504c7.69,3.861,17.505,3.021,28.006,5.502  c1.606,6.563,2.639,13.698,5.001,19.504c6.734,1.602,15.933,0.738,23.005,2c4.186,7.818,7.715,16.29,11.502,24.506  c-4.217,11.309-7.695,25.375-9.502,41.01c-2.027,17.546-1.936,31.865,2,45.01c-7.719,3.617-13.839,8.832-27.005,7.002  c-3,0-6.001,0-9.002,0c-4.278-3.027-8.12-6.408-12.502-10.002c-3.631-2.978-9.757-6.318-12.003-10.503  c-3.533-6.582-4.023-16.151-6.001-24.005c-2.02-8.021-4.385-15.643-6.501-23.506c-12.507-4.498-23.557-10.451-37.009-14.004  c-7.835,0-15.67,0-23.505,0c-4.837,0.332-10.999-0.662-15.003,0.501c-6.668,0-13.336,0-20.004,0  c-5.503,0.331-12.333-0.664-17.004,0.5c-4.723,4.112-5.059,12.612-8.502,18.004c-8.232,6.149-19.541,2.86-29.507,6.001  c-9.423,2.971-16.667,13.793-26.506,13.504c1.216-7.453,2.1-15.238,3.5-22.506c4.8-3.152,7.619-8.869,13.503-11.502  c8.821-3.948,20.193-3.832,30.507-7.002c2.514-8.961,8.113-16.396,10.002-25.506c1.771-8.537-0.226-17.053,1.5-26.506  c0.636-3.48,3.329-7.236,5.001-11.002C533.56,938.992,541.504,925.207,549.469,914.338z"/> <!-- 동작구 윤곽 -->
+            </svg>
+          </div> <!-- /map-stage -->
+        </div> <!-- /map-inner -->
+      </div> <!-- /map-card -->
+
+      <div class="list-card" id="listCard"> <!-- 오른쪽: 맛집 리스트 카드 -->
+        <div class="list-title">동작구 맛집 리스트</div> <!-- 리스트 제목 -->
+        <div class="list-sub">항목을 클릭하면 네이버지도가 새 탭에서 열립니다.</div> <!-- 안내 문구 -->
+
+        <div class="restaurant-list"> <!-- 맛집 아이템 컨테이너 -->
+          <!-- 1. 생생집 -->
+          <a class="restaurant-card" href="https://naver.me/FhfQAvQ1" target="_blank" rel="noopener">
+            <div class="restaurant-name">생생집 <span class="nv-badge">네이버지도</span></div> <!-- 가게명 + 배지 -->
+            <div class="restaurant-desc">서울 동작구 동작대로5길 16 1층 생생집</div> <!-- 주소 -->
+          </a>
+
+          <!-- 2. 페이퍼버드 커피하우스 -->
+          <a class="restaurant-card" href="https://naver.me/GhSWEngv" target="_blank" rel="noopener">
+            <div class="restaurant-name">페이퍼버드 커피하우스 <span class="nv-badge">네이버지도</span></div> <!-- 가게명 -->
+            <div class="restaurant-desc">서울 동작구 장승배기로18길 3 1층</div> <!-- 주소 -->
+          </a>
+
+          <!-- 3. 청해진 (노량진수산시장) -->
+          <a class="restaurant-card" href="https://naver.me/G5PhroVe" target="_blank" rel="noopener">
+            <div class="restaurant-name">청해진 <span class="nv-badge">네이버지도</span></div> <!-- 가게명 -->
+            <div class="restaurant-desc">서울 동작구 노들로 674 노량진수산시장 신관 2층 20호 청해진</div> <!-- 주소 -->
+          </a>
+        </div> <!-- /restaurant-list -->
+      </div> <!-- /list-card -->
+    </section> <!-- /layout -->
+  </main> <!-- /main -->
+
+  <footer>2025066644 | 최지민</footer> <!-- 학생 정보 푸터 -->
+
+  <script>
+    /* 좌/우 카드 높이 동기화 (데스크톱에서 보기 좋게) */
+    function syncLeftToRight(){
+      const left = document.getElementById('mapCard');   /* 왼쪽 카드 참조 */
+      const right = document.getElementById('listCard'); /* 오른쪽 카드 참조 */
+      if(!left || !right) return;                        /* 요소 없으면 종료 */
+
+      if (window.matchMedia('(max-width: 900px)').matches){ /* 모바일에서는 자동 높이 */
+        left.style.height = '';
+        return; /* 조정 없음 */
+      }
+
+      right.style.height = 'auto';                 /* 오른쪽 높이 계산 위해 초기화 */
+      const h = right.scrollHeight;                /* 오른쪽 실제 높이 측정 */
+      left.style.height = h + 'px';                /* 왼쪽을 동일 높이로 맞춤 */
+    }
+
+    window.addEventListener('load', syncLeftToRight);              /* 로드 시 동기화 */
+    window.addEventListener('resize', () => requestAnimationFrame(syncLeftToRight)); /* 리사이즈 시 동기화 */
+    document.fonts && document.fonts.ready && document.fonts.ready.then(syncLeftToRight); /* 폰트 로딩 후 동기화 */
+  </script>
+</body>
+</html>

@@ -1,0 +1,283 @@
+<!DOCTYPE html> <!-- 문서 타입 -->
+<html lang="ko"> <!-- 문서 언어: 한국어 -->
+<head> <!-- 문서 메타/스타일 영역 시작 -->
+  <meta charset="UTF-8" /> <!-- 인코딩 설정 -->
+  <title>성북구 맛집 지도</title> <!-- 브라우저 탭 제목 -->
+
+  <style> /* ================== 스타일 시작 ================== */
+    @font-face { /* 제목용 커스텀 폰트 등록 */
+      font-family: 'PyeongChangPeace'; /* 폰트 이름 식별자 */
+      src: url('./PyeongChangPeace-Bold.otf') format('opentype'); /* 폰트 파일 경로 */
+      font-weight: 700; /* 굵기 */
+      font-style: normal; /* 스타일 */
+      font-display: swap; /* 먼저 시스템 폰트로 표시 후 교체 */
+    }
+
+    :root{ /* 성북구 위치/배율 조정 변수: 여기만 바꾸면 배치 조정 가능 */
+      --sb-x: -50%;   /* X이동(음수=왼쪽, 양수=오른쪽) - 필요하면 직접 조정해도 됨 */
+      --sb-y: -55%;   /* Y이동(음수=위, 양수=아래) */
+      --sb-scale: 2; /* 확대/축소 배율 */
+    }
+
+    *{ box-sizing: border-box; } /* 박스 모델 일원화 */
+    body{ /* 문서 기본 스타일 */
+      margin: 0; /* 바깥여백 제거 */
+      padding: 0; /* 안쪽여백 제거 */
+      background: #fffdf5; /* 배경색(크림톤) */
+      color: #333; /* 본문 글자색 */
+      font-family: 'Noto Sans KR','Malgun Gothic','Apple SD Gothic Neo',system-ui,sans-serif; /* 기본 폰트 */
+    }
+
+    header{ /* 상단 헤더 영역 */
+      position: relative; /* 뒤로가기 절대배치 기준 */
+      text-align: center; /* 가운데 정렬 */
+      padding: 22px 20px 10px; /* 안쪽여백 */
+    }
+
+    .back-link{ /* 뒤로가기 링크 스타일 */
+      position: absolute; /* 헤더 기준 절대배치 */
+      left: 16px; /* 왼쪽 여백 */
+      top: 14px; /* 위 여백 */
+      color: inherit; /* 색상 상속 */
+      text-decoration: none; /* 밑줄 제거 */
+      -webkit-tap-highlight-color: transparent; /* 모바일 탭 하이라이트 제거 */
+    }
+
+    .title-badge{ /* 제목 배지 */
+      display: inline-block; /* 배지 형태 */
+      padding: 10px 36px; /* 안쪽여백 */
+      background: #e1edff; /* 배경색(연한 블루) */
+      border-radius: 24px; /* 둥근 모서리 */
+    }
+
+    header h1{ /* 페이지 타이틀 */
+      margin: 0; /* 바깥여백 제거 */
+      font-family: 'PyeongChangPeace',serif; /* 커스텀 폰트 적용 */
+      font-weight: 700; /* 굵기 */
+      font-size: 44px; /* 크기 */
+      letter-spacing: 2px; /* 자간 */
+    }
+
+    header .subtitle{ /* 부제목 */
+      margin: 12px 0 0; /* 바깥여백 */
+      font-size: 15px; /* 크기 */
+      color: #666; /* 색상 */
+    }
+
+    main{ /* 본문 컨테이너 */
+      max-width: 1100px; /* 최대 너비 */
+      margin: 26px auto 40px; /* 가운데 정렬 */
+      padding: 0 20px 40px; /* 안쪽여백 */
+    }
+
+    .layout{ /* 좌우 2열 레이아웃 */
+      display: grid; /* 그리드 활성화 */
+      grid-template-columns: minmax(0,1.1fr) minmax(0,1.1fr); /* 두 컬럼 비율 */
+      gap: 32px; /* 컬럼 간격 */
+      align-items: start; /* 상단 정렬 */
+    }
+
+    @media (max-width: 900px){ /* 화면 폭 900px 이하일 때 */
+      .layout{ grid-template-columns: 1fr; } /* 1열로 전환 */
+    }
+
+    .map-card,.list-card{ /* 카드 공통 스타일 */
+      background: #fff; /* 카드 배경 흰색 */
+      border-radius: 20px; /* 둥근 모서리 */
+      box-shadow: 0 6px 18px rgba(0,0,0,.06); /* 은은한 그림자 */
+    }
+
+    .map-card{ /* 지도 카드 */
+      padding: 18px; /* 안쪽여백 */
+      overflow: hidden; /* 넘침 숨김 */
+    }
+
+    .map-inner{ /* 지도 카드 내부 래퍼 */
+      display: flex; /* 플렉스 컨테이너 */
+      flex-direction: column; /* 세로 정렬 */
+      height: 100%; /* 높이 채움 */
+    }
+
+    .map-title{ /* 지도 소제목 */
+      font-weight: 700; /* 굵기 */
+      font-size: 17px; /* 크기 */
+      margin-bottom: 10px; /* 아래 여백 */
+      text-align: center; /* 가운데 정렬 */
+    }
+
+    .map-stage{ /* SVG 표시 영역 */
+      flex: 1; /* 남는 공간 채움 */
+      min-height: 440px; /* 최소 높이 확보 */
+      display: flex; /* 중앙 배치용 플렉스 */
+      align-items: center; /* 수직 중앙 */
+      justify-content: center; /* 수평 중앙 */
+    }
+
+    .map-stage svg{ /* SVG 크기 제어 */
+      width: clamp(520px, 60vw, 760px); /* 반응형 너비 */
+      height: auto; /* 비율 유지 */
+      display: block; /* 블록화 */
+      margin: 0 auto; /* 가운데 정렬 */
+    }
+
+    /* 성북구 path 스타일 + 위치/배율 적용 */
+    #Seongbuk-gu{ /* 메인 SVG에서 복사한 성북구 경계 path */
+      fill: #d5ffbe; /* 면색 */
+      stroke: #fff; /* 테두리 흰색 */
+      stroke-width: 2; /* 테두리 두께 */
+      vector-effect: non-scaling-stroke; /* 스케일해도 선두께 유지 */
+      transform-box: fill-box; /* 변환 기준 상자 */
+      transform-origin: center; /* 변환 기준점 중앙 */
+      transform: translate(var(--sb-x), var(--sb-y)) scale(var(--sb-scale)); /* 위치/배율 적용 */
+      transition: transform .2s ease; /* 전환 애니메이션 */
+    }
+
+    .list-card{ /* 우측 리스트 카드 */
+      padding: 18px 20px 22px; /* 안쪽여백 */
+    }
+
+    .list-title{ /* 리스트 제목 */
+      font-weight: 700; /* 굵기 */
+      font-size: 17px; /* 크기 */
+      margin-bottom: 6px; /* 아래 여백 */
+    }
+
+    .list-sub{ /* 안내 문구 */
+      font-size: 13px; /* 크기 */
+      color: #777; /* 색상 */
+      margin-bottom: 14px; /* 아래 여백 */
+    }
+
+    .restaurant-list{ /* 맛집 목록 래퍼 */
+      display: flex; /* 플렉스 */
+      flex-direction: column; /* 세로 나열 */
+      gap: 12px; /* 항목 간 간격 */
+      padding-right: 4px; /* 스크롤 여백 */
+    }
+
+    .restaurant-card{ /* 개별 맛집 카드 링크 */
+      display: block; /* 블록링크 */
+      border-radius: 14px; /* 둥근 모서리 */
+      padding: 12px 14px; /* 안쪽여백 */
+      background: #f7f5ee; /* 배경(연한 베이지) */
+      color: inherit; /* 글자색 상속 */
+      text-decoration: none; /* 밑줄 제거 */
+      transition: background .15s ease, transform .15s ease, box-shadow .15s ease; /* 호버 효과 */
+    }
+
+    .restaurant-card:hover{ /* 호버 시 효과 */
+      background: #f2eddc; /* 배경 조금 더 진하게 */
+      transform: translateY(-1px); /* 살짝 떠오름 */
+      box-shadow: 0 4px 10px rgba(0,0,0,.06); /* 그림자 */
+    }
+
+    .restaurant-name{ /* 가게명 */
+      font-weight: 700; /* 굵기 */
+      font-size: 15px; /* 크기 */
+      margin-bottom: 4px; /* 아래 여백 */
+    }
+
+    .restaurant-desc{ /* 주소 */
+      font-size: 12px; /* 크기 */
+      color: #777; /* 색상 */
+      line-height: 1.45; /* 줄간격 */
+      word-break: keep-all; /* 한국어 어절 유지 */
+    }
+
+    .nv-badge{ /* 네이버지도 배지 */
+      display: inline-block; /* 인라인블록 */
+      padding: 2px 8px; /* 안쪽여백 */
+      border-radius: 10px; /* 둥근 모서리 */
+      background: #e1edff; /* 배경 */
+      border: 1px solid #cfe0ff; /* 테두리 */
+      font-size: 12px; /* 크기 */
+      margin-left: 6px; /* 좌측 여백 */
+    }
+
+    footer{ /* 페이지 하단 푸터 */
+      text-align: center; /* 가운데 정렬 */
+      padding: 18px 10px 28px; /* 안쪽여백 */
+      font-size: 14px; /* 크기 */
+      color: #666; /* 색상 */
+      border-top: 1px solid #e3dccb; /* 상단 경계선 */
+    }
+  </style> <!-- ================== 스타일 끝 ================== -->
+</head> <!-- 메타/스타일 영역 끝 -->
+<body> <!-- 본문 시작 -->
+
+  <header> <!-- 헤더 영역 시작 -->
+    <a class="back-link" href="./index.html" aria-label="서울 맛집 지도 홈으로">←</a> <!-- 뒤로가기 -->
+    <div class="title-badge"><h1>성북구</h1></div> <!-- 타이틀 배지+제목 -->
+    <p class="subtitle">서울 성북구 맛집 지도</p> <!-- 부제 -->
+  </header> <!-- 헤더 영역 끝 -->
+
+  <main> <!-- 메인 콘텐츠 시작 -->
+    <section class="layout"> <!-- 좌우 2열 레이아웃 시작 -->
+
+      <div class="map-card" id="mapCard"> <!-- 좌측 지도 카드 -->
+        <div class="map-inner"> <!-- 내부 래퍼 -->
+          <div class="map-title">성북구 지도</div> <!-- 지도 소제목 -->
+          <div class="map-stage"> <!-- SVG 표시 무대 -->
+            <svg viewBox="0 0 1400 1400" preserveAspectRatio="xMidYMid meet" aria-hidden="true"> <!-- 서울 좌표계 -->
+              <!-- ▼▼ 메인 인덱스에서 복사한 성북구 path(위치/배율은 CSS 변수로 조정) ▼▼ -->
+              <path id="Seongbuk-gu" d="M729.51,392.219  c4.775,3.428,6.586,11.528,11.504,15.003c6.434,4.547,15.797,4.11,23.004,8.002c4.41,2.381,8.689,6.688,13.004,10.002  c13.127,10.086,26.316,20.602,38.508,30.507c3.721,15.952,7.818,31.525,11.504,47.511c6.191,3.309,10.23,8.773,21.004,7.501  c3.502,0,7.002,0,10.502,0c2.014-0.321,5.318,0.65,6.502-0.5c3.168,0,6.336,0,9.502,0c3.502,0,7.002,0,10.502,0  c2.014-0.321,5.318,0.65,6.502-0.5c14.43,1.926,18.871-6.135,27.506-10.002c8.346-16.495,17.166-32.512,26.006-48.511  c5.18,6.521,9.941,14.057,15.504,22.005c3.65,5.213,11.018,18.608,16.504,21.505c9.67,5.107,23.432,3.499,34.508,9.002  c0,2.334,0,4.667,0,7.001c-1.166,7.836-0.168,17.837-0.5,26.506c-24.066,7.941-54.93,9.086-72.016,24.006  c-3.877,3.459-7.545,7.126-11.004,11.002c-5.734,8.601-10.057,18.616-15.502,27.506c-14.291,4.829-22.807,10.759-33.508,19.004  c-3.418,2.634-8.207,4.543-10.002,7.502c-3.072,5.061-2.602,13.886-5.502,20.005c-1.129,2.381-7.93,10.95-10.002,11.502  c-5.072,1.351-12.443-1.066-18.504-1.5c-6.207-0.444-12.348-0.835-19.006-1c-15.918-17.589-23.059-43.956-35.508-65.015  c-7.059-1.465-12.77-6.458-21.004-8.502c-14.41-3.577-30.959-1.897-40.01-9.502c0.285-6.216,1.23-11.773,2-17.504  c5.316-1.52,10.008-3.664,15.004-5.501c1.957-7.628,7.678-12.839,8.502-20.505c1.564-14.538-5.063-26.023-9.002-36.508  c-2.35-6.257-5.504-12.853-7.502-19.505c-5.582-18.59-7.576-37.961-14.002-53.512c-4.844-3.493-10.78-5.892-14.504-10.503  c6.551-1.802,13.174,0.948,18.004-1C724.17,405.237,724.545,395.769,729.51,392.219z"/> 
+              <!-- ▲▲ 성북구 path 끝 ▲▲ -->
+            </svg> <!-- /SVG 끝 -->
+          </div> <!-- /map-stage 끝 -->
+        </div> <!-- /map-inner 끝 -->
+      </div> <!-- /map-card 끝 -->
+
+      <div class="list-card" id="listCard"> <!-- 우측 맛집 리스트 카드 -->
+        <div class="list-title">성북구 맛집 리스트</div> <!-- 섹션 제목 -->
+        <div class="list-sub">항목을 클릭하면 네이버지도가 새 탭에서 열립니다.</div> <!-- 안내 문구 -->
+
+        <div class="restaurant-list"> <!-- 맛집 목록 시작 -->
+
+          <!-- 1) 금뚜껑 -->
+          <a class="restaurant-card" href="https://naver.me/xPUNBu02" target="_blank" rel="noopener">
+            <div class="restaurant-name">금뚜껑 <span class="nv-badge">네이버지도</span></div>
+            <div class="restaurant-desc">서울 성북구 동소문로22길 64 1층</div>
+          </a>
+
+          <!-- 2) 까쉬 -->
+          <a class="restaurant-card" href="https://naver.me/52ckl1pL" target="_blank" rel="noopener">
+            <div class="restaurant-name">까쉬 <span class="nv-badge">네이버지도</span></div>
+            <div class="restaurant-desc">서울 성북구 보문로34길 72-5 까쉬</div>
+          </a>
+
+          <!-- 3) 샤브옥 -->
+          <a class="restaurant-card" href="https://naver.me/GkUrKqm5" target="_blank" rel="noopener">
+            <div class="restaurant-name">샤브옥 <span class="nv-badge">네이버지도</span></div>
+            <div class="restaurant-desc">서울 성북구 동소문로20다길 2 2층</div>
+          </a>
+
+        </div> <!-- /restaurant-list 끝 -->
+      </div> <!-- /list-card 끝 -->
+
+    </section> <!-- /layout 끝 -->
+  </main> <!-- 메인 콘텐츠 끝 -->
+
+  <footer>2025066644 | 최지민</footer> <!-- 하단 푸터 -->
+
+  <script> /* ===== 좌/우 카드 높이 동기화 스크립트 ===== */
+    function syncLeftToRight(){ /* 좌측 지도카드를 우측 리스트 높이에 맞추기 */
+      const left = document.getElementById('mapCard');   /* 좌측 카드 노드 */
+      const right = document.getElementById('listCard'); /* 우측 카드 노드 */
+      if(!left || !right) return; /* 요소가 없으면 종료 */
+
+      if (window.matchMedia('(max-width: 900px)').matches){ /* 모바일 폭일 때 */
+        left.style.height = ''; /* 자동 높이 */
+        return; /* 종료 */
+      }
+
+      right.style.height = 'auto'; /* 초기화 */
+      const h = right.scrollHeight; /* 실제 렌더 높이 계산 */
+      left.style.height = h + 'px'; /* 좌측 카드 높이 일치 */
+    }
+
+    window.addEventListener('load', syncLeftToRight); /* 문서 로드 시 동기화 */
+    window.addEventListener('resize', () => requestAnimationFrame(syncLeftToRight)); /* 리사이즈 시 동기화 */
+    if (document.fonts && document.fonts.ready){ document.fonts.ready.then(syncLeftToRight); } /* 폰트 로딩 후 동기화 */
+  </script> <!-- 스크립트 끝 -->
+</body> <!-- 본문 끝 -->
+</html> <!-- 문서 끝 -->
